@@ -91,7 +91,7 @@
 
     var okName = show("errName", name.length < 3);
     var okPhone = show("errPhone", phone.replace(/\D/g, "").length < 9);
-    var okEmail = show("errEmail", !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    var okEmail = show("errEmail", email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
     var okConsent = show("errConsent", !consent);
     if (!(okName && okPhone && okEmail && okConsent)) return;
 
@@ -106,17 +106,21 @@
       _captcha: "false",
       // Walker copy: CC the walker on the registration email so they
       // receive the full details + reference at their own address.
-      _cc: email,
       // Organizer replies go straight to the walker.
-      _replyto: email,
+      // Email is optional: when blank, only the organizer is mailed.
       "Event": cfg.eventName || "Xana World Pharmacists Day Walk",
       "Reference": ref,
       "Full name": name,
       "Phone number": phone,
-      "Email address": email,
+      "Email address": email || "Not provided",
       "Fitness and safety consent": "Yes, fit to walk and will follow marshals",
       "Submitted at": new Date().toISOString(),
     };
+
+    if (email) {
+      payload._cc = email;
+      payload._replyto = email;
+    }
 
     fetch("https://formsubmit.co/ajax/" + encodeURIComponent(ORGANIZER_EMAIL), {
       method: "POST",
@@ -157,6 +161,10 @@
         }).catch(function () {});
       } catch (err) {}
       document.getElementById("regRef").textContent = reference;
+      document.getElementById("successMsg").textContent =
+        "Karibu! See you at TRM Mall on Saturday 26 Sept by 6:00 AM. " +
+        "Your details were sent to the organizing team." +
+        (email ? " A copy was CC'd to " + email + "." : "");
       document.getElementById("formSuccess").hidden = false;
       form.querySelectorAll("input").forEach(function (i) { i.disabled = true; });
       submitBtn.style.display = "none";

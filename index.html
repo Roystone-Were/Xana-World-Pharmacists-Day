@@ -216,9 +216,9 @@
             <p class="error" id="errPhone" hidden>Please enter a valid phone number.</p>
           </div>
           <div class="field">
-            <label for="email">Email address</label>
-            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
-            <p class="error" id="errEmail" hidden>Please enter a valid email address.</p>
+            <label for="email">Email address <span class="optional-tag">(optional)</span></label>
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+            <p class="error" id="errEmail" hidden>That email address does not look valid. Leave it blank if you have none.</p>
           </div>
           <div class="field field-check">
             <input id="consent" name="consent" type="checkbox" required />
@@ -231,7 +231,7 @@
 
           <div class="form-success" id="formSuccess" hidden role="status">
             <h3>You are registered.</h3>
-            <p>Karibu! See you at TRM Mall on Saturday 26 Sept by 6:00 AM. Your details were sent to the organizing team, and a copy was CC'd to the email you registered with.</p>
+            <p id="successMsg">Karibu! See you at TRM Mall on Saturday 26 Sept by 6:00 AM. Your details were sent to the organizing team.</p>
             <p class="ref">Reference: <strong id="regRef">...</strong></p>
           </div>
         </form>

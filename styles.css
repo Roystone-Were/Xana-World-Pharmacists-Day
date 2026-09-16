@@ -198,6 +198,7 @@ a { color: inherit; }
 .form { background: var(--cream); border: 1px solid var(--line); border-radius: 18px; padding: 26px; }
 .field { margin-bottom: 16px; }
 .field label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.optional-tag { font-weight: 500; color: var(--muted); }
 .field input[type="text"], .field input[type="tel"], .field input[type="email"] {
   width: 100%; padding: 13px 14px; font-size: 16px; font-family: inherit; /* 16px stops iOS auto-zoom on focus */
   border: 1.5px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink);
