@@ -1,7 +1,8 @@
 # Xana World Pharmacists Day Walk — Registration Site
 
-Single-page registration site for the **Friday 25 September 2026** walk
-(TRM Mall → Xana Plus, Ruiru). Brand-matched to the xana-skincare inspiration
+Single-page registration site for the **Saturday 26 September 2026** walk
+(held in celebration of World Pharmacists Day, Friday 25 September 2026;
+TRM Mall → Xana Plus, Ruiru). Brand-matched to the xana-skincare inspiration
 site: deep green `#005c3a`, orange accent `#f58a07`, cream `#faf8f6`,
 Manrope display + Plus Jakarta Sans body.
 
