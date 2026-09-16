@@ -13,6 +13,7 @@ module.exports = async function handler(req, res) {
 
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const smsReady = !!(process.env.AT_API_KEY && process.env.AT_USERNAME);
 
   // Preferred backend: Upstash (total + per-day).
   if (url && token) {
@@ -31,9 +32,9 @@ module.exports = async function handler(req, res) {
       for (let i = 0; i < flat.length; i += 2) {
         days[flat[i]] = Number(flat[i + 1]);
       }
-      return res.status(200).json({ configured: true, total, days, backend: "upstash" });
+      return res.status(200).json({ configured: true, total, days, backend: "upstash", sms: smsReady });
     } catch (e) {
-      return res.status(500).json({ configured: true, total: null, days: {}, error: "counter-error" });
+      return res.status(500).json({ configured: true, total: null, days: {}, error: "counter-error", sms: smsReady });
     }
   }
 
@@ -42,8 +43,8 @@ module.exports = async function handler(req, res) {
     const r = await fetch(SHARED_GET_URL);
     if (!r.ok) throw new Error(`shared-${r.status}`);
     const out = await r.json();
-    return res.status(200).json({ configured: true, total: Number(out.value), days: {}, backend: "shared" });
+    return res.status(200).json({ configured: true, total: Number(out.value), days: {}, backend: "shared", sms: smsReady });
   } catch (e) {
-    return res.status(200).json({ configured: false, total: null, days: {} });
+    return res.status(200).json({ configured: false, total: null, days: {}, sms: smsReady });
   }
 };
