@@ -1,8 +1,7 @@
-// POST /api/register: increments the walk registration counter.
-// Body: { reference: "XANA-2026-ABCDE", name: "...", phone: "..." }
-// Stores aggregates only, plus a roster entry (name + phone, keyed by
-// reference) when Upstash is configured. Full details go to the organizer
-// inbox as before.
+// POST /api/register — increments the walk registration counter.
+// Body: { reference: "XANA-2026-ABCDE" }
+// Stores aggregates only. Names, phones and emails go to the organizer
+// inbox, never here.
 //
 // Backend: built-in shared counter (works with zero setup). If Upstash env
 // vars (UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN) are present, the
@@ -22,22 +21,17 @@ function nairobiDay() {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
-async function countViaUpstash(url, token, reference, day, rosterEntry) {
+async function countViaUpstash(url, token, reference, day) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-  const commands = [
-    ["INCR", "xana-walk:total"],
-    ["HINCRBY", "xana-walk:days", day, "1"],
-    ["SADD", "xana-walk:refs", reference],
-  ];
-  if (rosterEntry) {
-    // Attendance roster entry for the key-gated organizer list.
-    commands.push(["HSET", "xana-walk:roster", reference, rosterEntry]);
-  }
   // INCR total, HINCRBY per-day bucket, SADD reference (dedupe log).
   const r = await fetch(`${url}/pipeline`, {
     method: "POST",
     headers,
-    body: JSON.stringify(commands),
+    body: JSON.stringify([
+      ["INCR", "xana-walk:total"],
+      ["HINCRBY", "xana-walk:days", day, "1"],
+      ["SADD", "xana-walk:refs", reference],
+    ]),
   });
   if (!r.ok) throw new Error(`upstash-${r.status}`);
   const out = await r.json();
@@ -71,18 +65,13 @@ module.exports = async function handler(req, res) {
   if (!/^XANA-\d{4}-[A-Z0-9]{5}$/.test(reference)) {
     return res.status(400).json({ ok: false, error: "bad-reference" });
   }
-  // Roster fields (stored only in Upstash, shown only on the key-gated roster).
-  const walkerName = body && typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
-  const walkerPhone = body && typeof body.phone === "string" ? body.phone.trim().slice(0, 30) : "";
 
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   try {
     if (url && token) {
-      const rosterEntry =
-        walkerName || walkerPhone ? JSON.stringify({ n: walkerName, p: walkerPhone }) : null;
-      const total = await countViaUpstash(url, token, reference, nairobiDay(), rosterEntry);
+      const total = await countViaUpstash(url, token, reference, nairobiDay());
       return res.status(200).json({ ok: true, counted: true, total, backend: "upstash" });
     }
     const total = await countViaShared();

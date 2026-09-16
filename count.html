@@ -40,19 +40,12 @@
           <ul class="count-day-list" id="countDayList"></ul>
         </div>
 
-        <div class="count-days" id="countRosterWrap" hidden>
-          <h2>Attendance roster</h2>
-          <ul class="roster-list" id="countRosterList"></ul>
-        </div>
-
-        <p class="fineprint" id="countKeyHint">Organizers: open this page with ?key=YOUR_KEY to view the attendance roster.</p>
-
         <div class="form-success" id="countSetup" hidden>
           <h3>Counter not connected yet.</h3>
           <p id="countSetupText">Add the Upstash env vars in Vercel (see README section 6), then redeploy. Email registrations are unaffected.</p>
         </div>
 
-        <p class="fineprint">Source of truth stays the organizer inbox (one email per registration, each with a unique reference). This counter is indicative: it ticks when the confirmation screen shows. Names and phones appear only on the key-gated roster, never on the public totals.</p>
+        <p class="fineprint">Source of truth stays the organizer inbox (one email per registration, each with a unique reference). This counter is indicative: it ticks when the confirmation screen shows.</p>
       </div>
     </section>
   </main>
@@ -79,9 +72,7 @@
 
       async function load() {
         try {
-          var key = "";
-          try { key = new URLSearchParams(window.location.search).get("key") || ""; } catch (e) {}
-          var r = await fetch("./api/count" + (key ? "?key=" + encodeURIComponent(key) : ""), { cache: "no-store" });
+          var r = await fetch("./api/count", { cache: "no-store" });
           var d = await r.json();
           if (!d.configured || d.total === null) {
             totalEl.textContent = "...";
@@ -105,28 +96,6 @@
               li.appendChild(b);
               dayList.appendChild(li);
             });
-          }
-          var rosterWrap = document.getElementById("countRosterWrap");
-          var rosterList = document.getElementById("countRosterList");
-          var keyHint = document.getElementById("countKeyHint");
-          var roster = Array.isArray(d.roster) ? d.roster : [];
-          if (roster.length) {
-            rosterWrap.hidden = false;
-            keyHint.hidden = true;
-            rosterList.innerHTML = "";
-            roster.forEach(function (w) {
-              var li = document.createElement("li");
-              var b = document.createElement("strong");
-              b.textContent = w.name || "(name missing)";
-              var s = document.createElement("span");
-              s.textContent = w.ref + (w.phone ? " · " + w.phone : "");
-              li.appendChild(b);
-              li.appendChild(s);
-              rosterList.appendChild(li);
-            });
-          } else {
-            rosterWrap.hidden = true;
-            keyHint.hidden = false;
           }
         } catch (e) {
           totalEl.textContent = "...";

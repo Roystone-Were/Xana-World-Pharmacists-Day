@@ -153,7 +153,7 @@
         fetch("./api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reference: reference, name: name, phone: phone }),
+          body: JSON.stringify({ reference: reference }),
         }).catch(function () {});
       } catch (err) {}
       document.getElementById("regRef").textContent = reference;

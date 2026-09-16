@@ -1,8 +1,6 @@
-// GET /api/count: live registration numbers for the /count page.
+// GET /api/count — live registration numbers for the /count page.
 // Answers: { configured, total, days: { "2026-09-16": 12, ... } }
-// With a valid organizer key (?key=COUNT_KEY) it also answers the
-// attendance roster: roster: [{ ref, name, phone }]. Names and phones are
-// never returned without the key.
+// Aggregates only. No personal data is stored or returned.
 //
 // Backend: built-in shared counter (works with zero setup, total only).
 // With Upstash env vars set, answers also include the per-day breakdown.
@@ -16,19 +14,14 @@ module.exports = async function handler(req, res) {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  // Preferred backend: Upstash (total + per-day + key-gated roster).
+  // Preferred backend: Upstash (total + per-day).
   if (url && token) {
     const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-    const countKey = process.env.COUNT_KEY || "";
-    const givenKey = req.query && typeof req.query.key === "string" ? req.query.key : "";
-    const rosterAllowed = countKey.length >= 12 && givenKey === countKey;
-    const commands = [["GET", "xana-walk:total"], ["HGETALL", "xana-walk:days"]];
-    if (rosterAllowed) commands.push(["HGETALL", "xana-walk:roster"]);
     try {
       const r = await fetch(`${url}/pipeline`, {
         method: "POST",
         headers,
-        body: JSON.stringify(commands),
+        body: JSON.stringify([["GET", "xana-walk:total"], ["HGETALL", "xana-walk:days"]]),
       });
       if (!r.ok) throw new Error(`upstash-${r.status}`);
       const out = await r.json();
@@ -38,28 +31,9 @@ module.exports = async function handler(req, res) {
       for (let i = 0; i < flat.length; i += 2) {
         days[flat[i]] = Number(flat[i + 1]);
       }
-      const answer = { configured: true, total, days, backend: "upstash", roster: null };
-      if (rosterAllowed && out[2] && Array.isArray(out[2].result)) {
-        const rflat = out[2].result;
-        const roster = [];
-        for (let i = 0; i < rflat.length; i += 2) {
-          try {
-            const entry = JSON.parse(rflat[i + 1]);
-            roster.push({
-              ref: rflat[i],
-              name: String(entry.n || "").slice(0, 80),
-              phone: String(entry.p || "").slice(0, 30),
-            });
-          } catch (e) {
-            roster.push({ ref: rflat[i], name: "", phone: "" });
-          }
-        }
-        roster.sort((a, b) => (a.ref < b.ref ? -1 : 1));
-        answer.roster = roster;
-      }
-      return res.status(200).json(answer);
+      return res.status(200).json({ configured: true, total, days, backend: "upstash" });
     } catch (e) {
-      return res.status(500).json({ configured: true, total: null, days: {}, roster: null, error: "counter-error" });
+      return res.status(500).json({ configured: true, total: null, days: {}, error: "counter-error" });
     }
   }
 
