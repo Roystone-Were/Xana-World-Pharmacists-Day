@@ -5,7 +5,7 @@
 // Backend: built-in shared counter (works with zero setup, total only).
 // With Upstash env vars set, answers also include the per-day breakdown.
 
-const SHARED_GET_URL = "https://abacus.jasoncameron.dev/get/casfHolY2fMbgtbx/N-TyzgC5JKYidW3w";
+const SHARED_GET_URL = "https://abacus.jasoncameron.dev/get/AM3bvn_703hvTK_h/wPnChJ6NT-KwgAKb";
 
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");

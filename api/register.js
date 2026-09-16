@@ -8,7 +8,7 @@
 // counter upgrades to Upstash, which additionally records per-day counts
 // and reference IDs for dedupe.
 
-const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/casfHolY2fMbgtbx/N-TyzgC5JKYidW3w";
+const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/AM3bvn_703hvTK_h/wPnChJ6NT-KwgAKb";
 
 function nairobiDay() {
   const parts = new Intl.DateTimeFormat("en-CA", {
