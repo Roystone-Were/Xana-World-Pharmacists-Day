@@ -66,11 +66,19 @@ showing the live total. It ticks on every confirmation screen via
 `POST /api/register` and needs no setup: it uses a built-in shared counter
 backend (aggregates only, no personal data).
 
-Optional upgrade (per-day breakdown): create a free database at
-https://upstash.com (Redis, region near Nairobi), then in Vercel go to
-project → Settings → Environment Variables and add
-`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, then redeploy.
-`/count` will then also list sign-ups per day.
+## 7. Attendance roster backup (one-time setup)
+
+If organizer emails ever fail, `/count` doubles as a backup roster. It needs
+a free Upstash Redis store plus an organizer passcode:
+
+1. Create a free database at https://upstash.com (Redis, region near
+   Nairobi). Copy its **REST URL** and **REST token**.
+2. In Vercel: project → Settings → Environment Variables, add
+   `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and `COUNT_KEY`
+   (any long secret, min 12 chars), then redeploy.
+3. From then on, every registration stores name + phone keyed by reference.
+4. Open `https://…vercel.app/count?key=YOUR_KEY` to see totals, sign-ups per
+   day, and the full attendance roster. Without the key, only totals show.
 
 Note: the inbox stays the source of truth (one email per registration, each
 with a unique reference to cross-check against the counter).
