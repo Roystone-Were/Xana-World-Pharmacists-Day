@@ -231,6 +231,9 @@ a { color: inherit; }
 .footer-right { display: flex; gap: 18px; }
 .footer-right a { color: #fff; text-decoration: none; font-weight: 600; }
 .footer-right a:hover { text-decoration: underline; }
+.footer-contact { margin-top: 8px; }
+.footer-contact a { color: #fff; font-weight: 600; text-decoration: none; }
+.footer-contact a:hover { text-decoration: underline; }
 
 /* Closed state */
 .form-closed { text-align: center; padding: 12px 0 4px; }
