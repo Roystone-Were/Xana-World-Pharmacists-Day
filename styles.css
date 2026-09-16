@@ -25,7 +25,11 @@ body {
   background: var(--cream);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
+main { flex: 1; }
 h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; margin: 0; }
 p { margin: 0; }
 a { color: inherit; }
