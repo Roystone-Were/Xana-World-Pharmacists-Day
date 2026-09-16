@@ -74,3 +74,23 @@ project → Settings → Environment Variables and add
 
 Note: the inbox stays the source of truth (one email per registration, each
 with a unique reference to cross-check against the counter).
+
+## 8. Walker SMS via Africa's Talking (one-time setup)
+
+Every registration triggers a confirmation SMS to the walker's phone
+(confirmation screen says so only when the SMS is accepted). Without setup,
+SMS is skipped silently and email + counter keep working.
+
+1. Sign in at https://account.africastalking.com and create an app. Use the
+   **Sandbox** app to test free (delivery is simulated in the dashboard);
+   use a **Live** app for real walkers.
+2. In the app: copy the **username** (Sandbox username is literally
+   `sandbox`) and generate an **API key** under Settings.
+3. In Vercel: project → Settings → Environment Variables, add
+   `AT_API_KEY` and `AT_USERNAME`, then redeploy.
+4. Optional vars: `AT_SENDER` (only if you own a registered sender ID;
+   otherwise messages arrive from the shared short code), and
+   `AT_NOTIFY_NUMBER` (e.g. `+254142631157`) to also SMS-alert the team on
+   every signup.
+5. For Live SMS, top up SMS credits in the Africa's Talking dashboard
+   (M-PESA). Each confirmation is one short message.

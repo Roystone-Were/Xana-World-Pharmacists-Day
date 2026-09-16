@@ -1,4 +1,4 @@
-// GET /api/count — live registration numbers for the /count page.
+// GET /api/count: live registration numbers for the /count page.
 // Answers: { configured, total, days: { "2026-09-16": 12, ... } }
 // Aggregates only. No personal data is stored or returned.
 //

@@ -152,13 +152,24 @@
       submitBtn.disabled = false;
       submitBtn.textContent = "Submit registration";
       if (!ok) return;
-      // Tick the live counter (fire and forget: email is the source of truth).
+      // Tick the live counter + trigger the walker SMS (fire and forget:
+      // email is the source of truth).
       try {
         fetch("./api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reference: reference }),
-        }).catch(function () {});
+          body: JSON.stringify({ reference: reference, name: name, phone: phone }),
+        })
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (data) {
+            if (data && data.sms && phone) {
+              document.getElementById("successMsg").textContent +=
+                " A confirmation SMS was also sent to " + phone + ".";
+            }
+          })
+          .catch(function () {});
       } catch (err) {}
       document.getElementById("regRef").textContent = reference;
       document.getElementById("successMsg").textContent =
