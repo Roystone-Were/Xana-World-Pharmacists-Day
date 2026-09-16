@@ -104,6 +104,9 @@
       _subject: cfg.formSubject || "New registration: Xana World Pharmacists Day Walk",
       _template: "table",
       _captcha: "false",
+      // Walker copy: CC the walker on the registration email so they
+      // receive the full details + reference at their own address.
+      _cc: email,
       // Confirmation copy sent to the walker's own email address.
       _autoresponse:
         "Karibu " + name + "! You are registered for the Xana World Pharmacists Day Walk.\n\n" +
