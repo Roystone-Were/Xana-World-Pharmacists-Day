@@ -1,4 +1,4 @@
-/* Xana World Pharmacists Day Walk — registration logic (FormSubmit → organizer email) */
+/* Xana World Pharmacists Day Walk: registration logic (FormSubmit sends mail to organizer email) */
 (function () {
   "use strict";
 
@@ -21,7 +21,7 @@
   var mailLink = document.getElementById("organizerMailLink");
   if (mailLink && ORGANIZER_EMAIL) {
     mailLink.textContent = ORGANIZER_EMAIL;
-    mailLink.href = "mailto:" + ORGANIZER_EMAIL + "?subject=" + encodeURIComponent("Registration — Xana World Pharmacists Day Walk");
+    mailLink.href = "mailto:" + ORGANIZER_EMAIL + "?subject=" + encodeURIComponent("Registration: Xana World Pharmacists Day Walk");
   }
 
   // Countdown
@@ -66,7 +66,7 @@
 
   if (!form || isClosed()) {
     if (formNote && EMAIL_PLACEHOLDER) {
-      formNote.textContent = "Note: organizer email not set yet — edit config.js before sharing the link.";
+      formNote.textContent = "Note: organizer email not set yet. Edit config.js before sharing the link.";
     }
     return;
   }
@@ -101,7 +101,7 @@
     var ref = "XANA-" + new Date().getFullYear() + "-" + Math.random().toString(36).slice(2, 7).toUpperCase();
 
     var payload = {
-      _subject: cfg.formSubject || "New registration — Xana World Pharmacists Day Walk",
+      _subject: cfg.formSubject || "New registration: Xana World Pharmacists Day Walk",
       _template: "table",
       _captcha: "false",
       event: cfg.eventName || "Xana World Pharmacists Day Walk",
@@ -109,7 +109,7 @@
       fullName: name,
       phone: phone,
       email: email,
-      consent: "Yes — fit to walk, will follow marshals",
+      consent: "Yes, fit to walk and will follow marshals",
       submittedAt: new Date().toISOString(),
     };
 
@@ -134,7 +134,7 @@
             "%0D%0AEmail: " + encodeURIComponent(email) +
             "%0D%0AReference: " + ref;
           window.location.href = "mailto:" + ORGANIZER_EMAIL + "?subject=" +
-            encodeURIComponent("Walk registration — " + name) + "&body=" + body;
+            encodeURIComponent("Walk registration: " + name) + "&body=" + body;
         } catch (err) { /* noop */ }
         done(true, ref);
       });

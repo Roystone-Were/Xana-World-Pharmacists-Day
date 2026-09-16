@@ -1,4 +1,4 @@
-/* Xana World Pharmacists Day Walk — brand-matched styles.
+/* Xana World Pharmacists Day Walk: brand-matched styles.
    Tokens borrowed from the xana-skincare inspiration site:
    brand #005c3a · brand-dark #004a2e · tint #e9f3ed · accent #f58a07 · cream #faf8f6 */
 
@@ -62,7 +62,7 @@ a { color: inherit; }
 .nav-links a { text-decoration: none; color: var(--muted); }
 .nav-links a:hover { color: var(--brand); }
 
-/* Buttons — one label per intent: "Register" */
+/* Buttons: one label per intent ("Register") */
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 15px; text-decoration: none;
@@ -79,7 +79,15 @@ a { color: inherit; }
 .btn-block { width: 100%; }
 .btn[disabled] { opacity: 0.6; cursor: wait; }
 
-/* Hero — split */
+/* Animated nav CTA: gentle brand-green ping to draw the eye */
+.btn-pulse { animation: cta-ping 2.4s ease-out infinite; }
+@keyframes cta-ping {
+  0% { box-shadow: 0 0 0 0 rgba(0, 92, 58, 0.45); }
+  70% { box-shadow: 0 0 0 12px rgba(0, 92, 58, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 92, 58, 0); }
+}
+
+/* Hero: split */
 .hero { padding: 56px 0 40px; }
 .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 40px; align-items: start; }
 .kicker { margin-bottom: 14px; }
@@ -248,7 +256,7 @@ img { max-width: 100%; }
   .form { padding: 20px; }
 }
 
-/* Small phones — stack CTAs full-width, relax the meta row */
+/* Small phones: stack CTAs full-width, relax the meta row */
 @media (max-width: 520px) {
   .wrap { padding: 0 16px; }
   .brand-logo { height: 38px; }
@@ -263,4 +271,5 @@ img { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .btn { transition: none; }
+  .btn-pulse { animation: none; }
 }
