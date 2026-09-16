@@ -52,7 +52,7 @@ The resulting `https://…vercel.app` link is what you send to participants.
 - Registration closes **Wednesday 23 Sept · 9:00 PM EAT** (live countdown;
   the form auto-closes after the deadline)
 - Collects: full name, phone, email + fitness/marshal consent (simple set)
-- Poster + route map PDFs in `assets/` (from the invitation email)
+- Route map PDF in `assets/` (from the invitation email)
 
 ## 5. Tracking numbers
 

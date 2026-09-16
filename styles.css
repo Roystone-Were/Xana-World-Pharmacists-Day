@@ -214,7 +214,7 @@ a { color: inherit; }
 .form-success .ref { font-size: 13.5px; color: var(--muted); }
 
 /* Docs */
-.docs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.docs-grid { display: grid; grid-template-columns: 1fr; gap: 18px; max-width: 560px; }
 .doc-card {
   display: block; background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
   padding: 22px; text-decoration: none;
