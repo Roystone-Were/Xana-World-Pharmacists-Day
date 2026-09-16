@@ -259,6 +259,7 @@ img { max-width: 100%; }
 /* Small phones: stack CTAs full-width, relax the meta row */
 @media (max-width: 520px) {
   .wrap { padding: 0 16px; }
+  .deadline-bar .dot { display: none; } /* dot wraps awkwardly on narrow screens */
   .brand-logo { height: 38px; }
   .hero-cta .btn { flex: 1 1 100%; padding: 15px 24px; }
   .hero-meta div { flex: 1 1 40%; }
