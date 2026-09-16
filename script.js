@@ -31,14 +31,16 @@
   var submitBtn = document.getElementById("submitBtn");
   var formNote = document.getElementById("formNote");
 
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
   function fmt(ms) {
     if (ms <= 0) return "Closed";
     var s = Math.floor(ms / 1000);
     var d = Math.floor(s / 86400);
     var h = Math.floor((s % 86400) / 3600);
     var m = Math.floor((s % 3600) / 60);
-    if (d > 0) return d + "d : " + h + "h : " + m + "m";
-    return h + "h : " + m + "m : " + (s % 60) + "s";
+    var sec = s % 60;
+    if (d > 0) return d + "d : " + pad(h) + "h : " + pad(m) + "m : " + pad(sec) + "s";
+    return pad(h) + "h : " + pad(m) + "m : " + pad(sec) + "s";
   }
 
   function isClosed() {
