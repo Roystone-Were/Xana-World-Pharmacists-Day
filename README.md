@@ -55,3 +55,19 @@ The resulting `https://…vercel.app` link is what you send to participants.
 
 - Inbox: one email per registration (search the form subject to count).
 - FormSubmit dashboard + the mailto fallback keep nobody lost if offline.
+
+## 6. Live counter at /count (one-time setup, 5 minutes)
+
+The site has a separate organizers-only page at `https://…vercel.app/count`
+showing the live total plus sign-ups per day (aggregates only, no personal
+data). It needs a free Upstash Redis store:
+
+1. Create a free database at https://upstash.com (Redis, any region close to
+   Nairobi, e.g. EU). Copy its **REST URL** and **REST token**.
+2. In Vercel: project → Settings → Environment Variables, add
+   `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, then redeploy.
+3. Open `/count` to see the total. Every confirmation screen ticks it via
+   `POST /api/register`.
+
+Until step 2 is done, `/count` shows "Counter not connected", and email
+registrations keep working normally.

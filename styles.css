@@ -233,6 +233,20 @@ a { color: inherit; }
 .form-closed h3 { font-size: 20px; }
 .form-closed p { color: var(--muted); margin-top: 8px; font-size: 14.5px; }
 
+/* Organizer count page (/count) */
+.count-wrap { max-width: 640px; }
+.count-card { margin-top: 24px; background: var(--brand-dark); color: #fff; border-radius: 20px; padding: 36px 28px; text-align: center; }
+.count-total { font-family: var(--font-display); font-size: clamp(56px, 12vw, 96px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.count-label { margin-top: 6px; font-size: 15px; opacity: 0.8; font-weight: 600; }
+.count-updated { margin-top: 10px; font-size: 13px; opacity: 0.65; }
+.count-days { margin-top: 28px; }
+.count-days h2 { font-size: 20px; margin-bottom: 12px; }
+.count-day-list { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.count-day-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; font-size: 14.5px; border-bottom: 1px solid var(--line); }
+.count-day-list li:last-child { border-bottom: 0; }
+.count-day-list strong { color: var(--brand); font-size: 17px; }
+#countSetup { margin-top: 24px; }
+
 /* Images never overflow small screens; anchored sections clear the sticky nav */
 img { max-width: 100%; }
 .section, .stats { scroll-margin-top: 76px; }

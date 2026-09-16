@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registration count | Xana World Pharmacists Day Walk</title>
+  <meta name="description" content="Live registration count for the Xana World Pharmacists Day Walk. Organizers only." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml" />
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="./" aria-label="Back to registration page">
+        <img class="brand-logo" src="./assets/logo.svg" alt="Xana Life, Every Day Better" />
+      </a>
+      <a class="btn btn-primary btn-sm" style="margin-left:auto" href="./">Registration page</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="wrap count-wrap">
+        <p class="kicker"><span class="kicker-pill">ORGANIZERS ONLY</span></p>
+        <h1>Registrations so far</h1>
+        <p class="lede">Live count of walk sign-ups. Updates automatically.</p>
+
+        <div class="count-card" role="status" aria-live="polite">
+          <p class="count-total" id="countTotal">...</p>
+          <p class="count-label">registered walkers</p>
+          <p class="count-updated" id="countUpdated"></p>
+        </div>
+
+        <div class="count-days" id="countDaysWrap" hidden>
+          <h2>Sign-ups per day</h2>
+          <ul class="count-day-list" id="countDayList"></ul>
+        </div>
+
+        <div class="form-success" id="countSetup" hidden>
+          <h3>Counter not connected yet.</h3>
+          <p id="countSetupText">Add the Upstash env vars in Vercel (see README section 6), then redeploy. Email registrations are unaffected.</p>
+        </div>
+
+        <p class="fineprint">Source of truth stays the organizer inbox (one email per registration, each with a unique reference). This counter is indicative: it ticks when the confirmation screen shows.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div>
+        <p class="footer-logo-chip"><img src="./assets/logo.svg" alt="Xana Life, Every Day Better" /></p>
+        <p>World Pharmacists Day Walk · Saturday 26 September 2026 · TRM Mall → Xana Plus, Ruiru.</p>
+      </div>
+      <div class="footer-right">
+        <a href="./">Register</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var totalEl = document.getElementById("countTotal");
+      var updatedEl = document.getElementById("countUpdated");
+      var daysWrap = document.getElementById("countDaysWrap");
+      var dayList = document.getElementById("countDayList");
+      var setupEl = document.getElementById("countSetup");
+
+      async function load() {
+        try {
+          var r = await fetch("./api/count", { cache: "no-store" });
+          var d = await r.json();
+          if (!d.configured || d.total === null) {
+            totalEl.textContent = "—";
+            setupEl.hidden = false;
+            return;
+          }
+          setupEl.hidden = true;
+          totalEl.textContent = d.total;
+          updatedEl.textContent = "Updated " + new Date().toLocaleTimeString("en-KE", { timeZone: "Africa/Nairobi" }) + " EAT";
+          var days = Object.keys(d.days || {}).sort();
+          if (days.length) {
+            daysWrap.hidden = false;
+            dayList.innerHTML = "";
+            days.forEach(function (day) {
+              var li = document.createElement("li");
+              var s = document.createElement("span");
+              s.textContent = day;
+              var b = document.createElement("strong");
+              b.textContent = d.days[day];
+              li.appendChild(s);
+              li.appendChild(b);
+              dayList.appendChild(li);
+            });
+          }
+        } catch (e) {
+          totalEl.textContent = "—";
+          setupEl.hidden = false;
+        }
+      }
+      load();
+      setInterval(load, 30000);
+    })();
+  </script>
+</body>
+</html>

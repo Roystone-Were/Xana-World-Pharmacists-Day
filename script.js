@@ -143,6 +143,14 @@
       submitBtn.disabled = false;
       submitBtn.textContent = "Submit registration";
       if (!ok) return;
+      // Tick the live counter (fire and forget: email is the source of truth).
+      try {
+        fetch("./api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference: reference }),
+        }).catch(function () {});
+      } catch (err) {}
       document.getElementById("regRef").textContent = reference;
       document.getElementById("formSuccess").hidden = false;
       form.querySelectorAll("input").forEach(function (i) { i.disabled = true; });
