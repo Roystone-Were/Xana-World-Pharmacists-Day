@@ -5,7 +5,7 @@
 // 3. Redeploy (Vercel) after editing this file.
 
 window.XANA_WALK_CONFIG = {
-  organizerEmail: "joywincate@xanalife.com",
+  organizerEmail: "roystone@xanalife.com", // test inbox
 
   eventName: "Xana World Pharmacists Day Walk",
   eventDateLabel: "Saturday, 26 September 2026",
