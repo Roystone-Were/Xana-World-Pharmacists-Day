@@ -233,6 +233,7 @@ img { max-width: 100%; }
 @media (max-width: 900px) {
   .nav-links { display: none; }
   .nav-inner { gap: 12px; }
+  .nav-inner .btn { margin-left: auto; } /* pin Register to the right edge when links are hidden */
   .hero-grid, .register-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .stat:nth-child(2) { border-right: 0; }
