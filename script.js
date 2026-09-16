@@ -104,6 +104,15 @@
       _subject: cfg.formSubject || "New registration: Xana World Pharmacists Day Walk",
       _template: "table",
       _captcha: "false",
+      // Confirmation copy sent to the walker's own email address.
+      _autoresponse:
+        "Karibu " + name + "! You are registered for the Xana World Pharmacists Day Walk.\n\n" +
+        "Walk day: Saturday 26 September 2026 (in celebration of World Pharmacists Day, Fri 25 Sept).\n" +
+        "Assemble at TRM Mall from 6:00 AM. Walk starts 6:30 AM sharp.\n" +
+        "Finish: Xana Plus, Ruiru. About 20 km, around 4 hours on foot.\n\n" +
+        "Bring comfortable walking shoes, water and sun protection.\n\n" +
+        "Your reference: " + ref + " (also shown on your confirmation screen).\n\n" +
+        "See you there. Xana Life.",
       event: cfg.eventName || "Xana World Pharmacists Day Walk",
       reference: ref,
       fullName: name,

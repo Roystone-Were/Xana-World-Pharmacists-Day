@@ -19,7 +19,9 @@ with your real inbox, e.g. `organizerEmail: "you@xanapharmacy.co.ke",`.
 It uses **FormSubmit (free, no backend)**. The first submission triggers a
 one-time activation email from FormSubmit to that inbox. Click **Activate**,
 and every later sign-up flows straight in with the subject
-"New registration: Xana World Pharmacists Day Walk".
+"New registration: Xana World Pharmacists Day Walk". The walker automatically
+receives a confirmation copy at the email they registered with
+(`_autoresponse`, includes walk-day details and their reference).
 
 ## 2. Preview locally
 

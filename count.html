@@ -75,7 +75,7 @@
           var r = await fetch("./api/count", { cache: "no-store" });
           var d = await r.json();
           if (!d.configured || d.total === null) {
-            totalEl.textContent = "—";
+            totalEl.textContent = "...";
             setupEl.hidden = false;
             return;
           }
@@ -98,7 +98,7 @@
             });
           }
         } catch (e) {
-          totalEl.textContent = "—";
+          totalEl.textContent = "...";
           setupEl.hidden = false;
         }
       }
