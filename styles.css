@@ -56,13 +56,8 @@ a { color: inherit; }
   border-bottom: 1px solid var(--line);
 }
 .nav-inner { display: flex; align-items: center; gap: 20px; height: 66px; }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; }
-.brand-mark {
-  width: 34px; height: 34px; border-radius: 10px;
-  background: var(--brand); color: #fff;
-  display: grid; place-items: center; font-size: 19px;
-}
-.brand-text em { font-style: normal; font-weight: 500; color: var(--muted); }
+.brand { display: flex; align-items: center; text-decoration: none; }
+.brand-logo { height: 44px; width: auto; display: block; }
 .nav-links { margin-left: auto; display: flex; gap: 18px; font-size: 14.5px; font-weight: 600; }
 .nav-links a { text-decoration: none; color: var(--muted); }
 .nav-links a:hover { color: var(--brand); }
@@ -219,7 +214,8 @@ a { color: inherit; }
 /* Footer */
 .footer { background: var(--brand-dark); color: rgba(255,255,255,0.85); padding: 32px 0; font-size: 14px; }
 .footer-inner { display: flex; gap: 20px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
-.footer-brand { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.06em; color: #fff; margin-bottom: 6px; }
+.footer-logo-chip { display: inline-block; background: #fff; border-radius: 12px; padding: 8px 14px; margin: 0 0 10px; }
+.footer-logo-chip img { height: 46px; width: auto; display: block; }
 .footer-right { display: flex; gap: 18px; }
 .footer-right a { color: #fff; text-decoration: none; font-weight: 600; }
 .footer-right a:hover { text-decoration: underline; }
