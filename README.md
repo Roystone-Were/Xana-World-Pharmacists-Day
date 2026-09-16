@@ -19,9 +19,10 @@ with your real inbox, e.g. `organizerEmail: "you@xanapharmacy.co.ke",`.
 It uses **FormSubmit (free, no backend)**. The first submission triggers a
 one-time activation email from FormSubmit to that inbox. Click **Activate**,
 and every later sign-up flows straight in with the subject
-"New registration: Xana World Pharmacists Day Walk". The walker automatically
-receives a confirmation copy at the email they registered with
-(`_autoresponse`, includes walk-day details and their reference).
+"New registration: Xana World Pharmacists Day Walk". The walker is CC'd on
+the same email so they receive the details and reference (`_cc`), and
+organizer replies go straight to the walker (`_replyto`). Note: FormSubmit's
+`_autoresponse` cannot fire over AJAX, so it is intentionally not used.
 
 ## 2. Preview locally
 

@@ -107,22 +107,15 @@
       // Walker copy: CC the walker on the registration email so they
       // receive the full details + reference at their own address.
       _cc: email,
-      // Confirmation copy sent to the walker's own email address.
-      _autoresponse:
-        "Karibu " + name + "! You are registered for the Xana World Pharmacists Day Walk.\n\n" +
-        "Walk day: Saturday 26 September 2026 (in celebration of World Pharmacists Day, Fri 25 Sept).\n" +
-        "Assemble at TRM Mall from 6:00 AM. Walk starts 6:30 AM sharp.\n" +
-        "Finish: Xana Plus, Ruiru. About 20 km, around 4 hours on foot.\n\n" +
-        "Bring comfortable walking shoes, water and sun protection.\n\n" +
-        "Your reference: " + ref + " (also shown on your confirmation screen).\n\n" +
-        "See you there. Xana Life.",
-      event: cfg.eventName || "Xana World Pharmacists Day Walk",
-      reference: ref,
-      fullName: name,
-      phone: phone,
-      email: email,
-      consent: "Yes, fit to walk and will follow marshals",
-      submittedAt: new Date().toISOString(),
+      // Organizer replies go straight to the walker.
+      _replyto: email,
+      "Event": cfg.eventName || "Xana World Pharmacists Day Walk",
+      "Reference": ref,
+      "Full name": name,
+      "Phone number": phone,
+      "Email address": email,
+      "Fitness and safety consent": "Yes, fit to walk and will follow marshals",
+      "Submitted at": new Date().toISOString(),
     };
 
     fetch("https://formsubmit.co/ajax/" + encodeURIComponent(ORGANIZER_EMAIL), {
