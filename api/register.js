@@ -114,10 +114,10 @@ const LOGO_URL =
 function mailShell(title, inner) {
   return (
     '<!doctype html><html><head><meta charset="utf-8"/><meta name="color-scheme" content="light dark"/><meta name="supported-color-schemes" content="light dark"/>' +
-    '<style>@media (prefers-color-scheme: dark){.outer{background-color:#1c1c1e !important;}.card{background-color:#101012 !important;border-color:#3a3a3a !important;}.h1{color:#ffffff !important;}.sub{color:#b5b5b5 !important;}.rowbox{background-color:#1a1a1d !important;border-color:#2c2c30 !important;}.lbl{color:#8a8a8a !important;}.val{color:#ffffff !important;}.rule{border-color:#2c2c30 !important;}.foot,.caption{color:#8a8a8a !important;}}</style>' +
+    '<style>@media (prefers-color-scheme: dark){.outer{background-color:#1c1c1e !important;}.card{background-color:#101012 !important;border-color:#3a3a3a !important;}.h1{color:#ffffff !important;}.sub{color:#b5b5b5 !important;}.rowbox{background-color:#1a1a1d !important;border-color:#2c2c30 !important;}.lbl{color:#8a8a8a !important;}.val{color:#ffffff !important;}.rule{border-color:#2c2c30 !important;}.foot,.caption{color:#8a8a8a !important;}}@media screen and (max-width:600px){.pad{padding:28px 20px !important;}}</style>' +
     '</head><body style="margin:0;padding:24px 12px;background-color:#eef2ef;font-family:Arial,Helvetica,sans-serif;">' +
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" class="outer" style="background-color:#eef2ef;">' +
-    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" class="card" style="max-width:560px;background-color:#ffffff;border:1px solid #dfe5e1;border-radius:16px;"><tr><td style="padding:36px 32px;text-align:center;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="card" style="width:100%;max-width:560px;background-color:#ffffff;border:1px solid #dfe5e1;border-radius:16px;"><tr><td class="pad" style="padding:36px 32px;text-align:center;">' +
     '<div style="display:inline-block;background-color:#ffffff;border-radius:12px;padding:10px 22px;">' +
     '<img src="' + LOGO_URL + '" width="200" alt="Xana Life, Every Day Better" style="display:block;width:200px;max-width:100%;height:auto;border:0;"/>' +
     '</div>' +
@@ -129,14 +129,18 @@ function mailShell(title, inner) {
   );
 }
 
-function mailRow(label, value) {
-  return (
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="rowbox" style="margin-top:10px;background-color:#f2f6f3;border:1px solid #e2e8e4;border-radius:10px;"><tr>' +
-    '<td style="padding:12px 16px;text-align:left;">' +
-    '<div class="lbl" style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6b7a71;">' + label + '</div>' +
-    '<div class="val" style="font-size:15px;font-weight:700;color:#14231c;margin-top:4px;">' + value + '</div>' +
-    '</td></tr></table>'
-  );
+function mailRows(pairs) {
+  const out = [];
+  pairs.forEach(function (p, i) {
+    if (i > 0) out.push('<tr><td height="10" style="font-size:0;line-height:0;">&nbsp;</td></tr>');
+    out.push(
+      '<tr><td class="rowbox" style="background-color:#f2f6f3;border:1px solid #e2e8e4;border-radius:10px;padding:12px 16px;text-align:left;">' +
+      '<div class="lbl" style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6b7a71;">' + p[0] + '</div>' +
+      '<div class="val" style="font-size:15px;font-weight:700;color:#14231c;margin-top:4px;">' + p[1] + '</div>' +
+      '</td></tr>'
+    );
+  });
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;margin-top:14px;">' + out.join("") + '</table>';
 }
 
 function mailButton(text, url) {
@@ -160,11 +164,13 @@ function walkerMailHtml(d) {
   return mailShell(
     "Karibu, " + esc(d.firstName) + "!",
     '<div class="sub" style="font-size:15px;color:#5b6a61;line-height:1.6;">You are registered for the Xana World Pharmacists Day Walk.</div>' +
-      mailRow("Walk day", "Saturday 26 September 2026") +
-      mailRow("Assemble", "TRM Mall from 6:00 AM") +
-      mailRow("Step-off", "6:30 AM sharp") +
-      mailRow("Finish", "Xana Plus, Ruiru (about 20 km)") +
-      mailRow("Reference", esc(d.reference)) +
+      mailRows([
+        ["Walk day", "Saturday 26 September 2026"],
+        ["Assemble", "TRM Mall from 6:00 AM"],
+        ["Step-off", "6:30 AM sharp"],
+        ["Finish", "Xana Plus, Ruiru (about 20 km)"],
+        ["Reference", esc(d.reference)],
+      ]) +
       mailButton("Chat with us on WhatsApp", wa) +
       mailDivider("Bring comfortable walking shoes, water and sun protection. Enquiries: +254 142 631 157.<br/>In celebration of World Pharmacists Day (Fri 25 Sept).")
   );
@@ -174,12 +180,14 @@ function organizerMailHtml(d) {
   return mailShell(
     "New walker registered",
     '<div class="sub" style="font-size:15px;color:#5b6a61;line-height:1.6;">' + esc(d.name || "A walker") + ' just signed up for the walk.</div>' +
-      mailRow("Reference", esc(d.reference)) +
-      mailRow("Full name", esc(d.name)) +
-      mailRow("Phone", esc(d.phone)) +
-      mailRow("Email", esc(d.email || "Not provided")) +
-      mailRow("Consent", "Fit to walk, follows marshals") +
-      mailRow("Submitted", esc(d.submittedAt)) +
+      mailRows([
+        ["Reference", esc(d.reference)],
+        ["Full name", esc(d.name)],
+        ["Phone", esc(d.phone)],
+        ["Email", esc(d.email || "Not provided")],
+        ["Consent", "Fit to walk, follows marshals"],
+        ["Submitted", esc(d.submittedAt)],
+      ]) +
       mailDivider("Automated registration notice. Reply to this email to reach the walker directly (when an address was provided).")
   );
 }
