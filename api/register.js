@@ -132,9 +132,10 @@ function mailShell(title, inner) {
 function mailRow(label, value) {
   return (
     '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="rowbox" style="margin-top:10px;background-color:#f2f6f3;border:1px solid #e2e8e4;border-radius:10px;"><tr>' +
-    '<td class="lbl" style="padding:10px 14px;text-align:left;font-size:13px;color:#6b7a71;">' + label + '</td>' +
-    '<td class="val" style="padding:10px 14px;text-align:left;font-size:14px;font-weight:700;color:#14231c;">' + value + '</td>' +
-    '</tr></table>'
+    '<td style="padding:12px 16px;text-align:left;">' +
+    '<div class="lbl" style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#6b7a71;">' + label + '</div>' +
+    '<div class="val" style="font-size:15px;font-weight:700;color:#14231c;margin-top:4px;">' + value + '</div>' +
+    '</td></tr></table>'
   );
 }
 
