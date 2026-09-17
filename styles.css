@@ -287,6 +287,9 @@ a { color: inherit; }
 .count-day-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; font-size: 14.5px; border-bottom: 1px solid var(--line); }
 .count-day-list li:last-child { border-bottom: 0; }
 .count-day-list strong { color: var(--brand); font-size: 17px; }
+.count-day-list li.total-row { background: var(--brand-tint); }
+.count-day-list li.total-row span { font-weight: 800; }
+.count-day-list li.total-row strong { color: var(--accent); font-size: 20px; font-weight: 800; }
 #countSetup { margin-top: 24px; }
 
 /* Images never overflow small screens; anchored sections clear the sticky nav */
