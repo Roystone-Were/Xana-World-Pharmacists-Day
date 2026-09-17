@@ -76,7 +76,7 @@ The resulting `https://…vercel.app` link is what you send to participants.
   Plant House, The Nord Mall)
 - Registration closes **Wednesday 23 Sept · 9:00 PM EAT** (live countdown;
   the form auto-closes after the deadline)
-- Collects: full name, phone, optional email + fitness/marshal consent (simple set)
+- Collects: full name, phone, optional email, T-shirt size + fitness/marshal consent (simple set)
 - Route map PDF in `assets/` (from the invitation email)
 
 ## 5. Tracking numbers

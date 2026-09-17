@@ -1,5 +1,5 @@
 // POST /api/register: counter + email + walker SMS confirmation.
-// Body: { reference: "XANA-2026-ABCDE", name: "...", phone: "...", email: "..." }
+// Body: { reference: "XANA-2026-ABCDE", name: "...", phone: "...", email: "...", tshirt: "L" }
 // Counter stores aggregates only. The phone number is used transiently to
 // send the confirmation SMS and is never stored.
 //
@@ -185,6 +185,7 @@ function organizerMailHtml(d) {
         ["Full name", esc(d.name)],
         ["Phone", esc(d.phone)],
         ["Email", esc(d.email || "Not provided")],
+        ["T-shirt size", esc(d.tshirt || "Not provided")],
         ["Consent", "Fit to walk, follows marshals"],
         ["Submitted", esc(d.submittedAt)],
       ]) +
@@ -226,6 +227,8 @@ function organizerMailText(d) {
     "Full name: " + d.name,
     "Phone number: " + d.phone,
     "Email address: " + (d.email || "Not provided"),
+    "T-shirt size: " + (d.tshirt || "Not provided"),
+    "T-shirt size: " + (d.tshirt || "Not provided"),
     "Fitness and safety consent: Yes, fit to walk and will follow marshals",
     "Submitted at: " + d.submittedAt,
     "",
@@ -272,6 +275,7 @@ module.exports = async function handler(req, res) {
   const walkerName = body && typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
   const walkerPhone = body && typeof body.phone === "string" ? body.phone.trim().slice(0, 30) : "";
   const walkerEmail = body && typeof body.email === "string" ? body.email.trim().slice(0, 120) : "";
+  const walkerTshirt = body && typeof body.tshirt === "string" ? body.tshirt.trim().slice(0, 15) : "";
   const emailOk = isEmail(walkerEmail);
   const organizerEmail = process.env.ORGANIZER_EMAIL || "";
 
@@ -297,6 +301,7 @@ module.exports = async function handler(req, res) {
         name: walkerName,
         phone: walkerPhone,
         email: walkerEmail,
+        tshirt: walkerTshirt,
         submittedAt: new Date().toISOString(),
       };
       mail.organizer = await sendMailgun({

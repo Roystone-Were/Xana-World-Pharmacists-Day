@@ -87,13 +87,15 @@
     var name = document.getElementById("fullName").value.trim();
     var phone = document.getElementById("phone").value.trim();
     var email = document.getElementById("email").value.trim();
+    var tshirt = document.getElementById("tshirt").value;
     var consent = document.getElementById("consent").checked;
 
     var okName = show("errName", name.length < 3);
     var okPhone = show("errPhone", phone.replace(/\D/g, "").length < 9);
     var okEmail = show("errEmail", email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    var okTshirt = show("errTshirt", !tshirt);
     var okConsent = show("errConsent", !consent);
-    if (!(okName && okPhone && okEmail && okConsent)) return;
+    if (!(okName && okPhone && okEmail && okTshirt && okConsent)) return;
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting…";
@@ -105,7 +107,7 @@
     fetch("./api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ reference: ref, name: name, phone: phone, email: email }),
+      body: JSON.stringify({ reference: ref, name: name, phone: phone, email: email, tshirt: tshirt }),
     })
       .then(function (res) {
         if (!res.ok) throw new Error("Register failed");
@@ -142,6 +144,7 @@
         "Full name": name,
         "Phone number": phone,
         "Email address": email || "Not provided",
+        "T-shirt size": tshirt,
         "Fitness and safety consent": "Yes, fit to walk and will follow marshals",
         "Submitted at": new Date().toISOString(),
       };

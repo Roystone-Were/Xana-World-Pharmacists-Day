@@ -219,6 +219,20 @@
             <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
             <p class="error" id="errEmail" hidden>That email address does not look valid. Leave it blank if you have none.</p>
           </div>
+          <div class="field">
+            <label for="tshirt">T-shirt size</label>
+            <select id="tshirt" name="tshirt" required>
+              <option value="" selected>Select your size</option>
+              <option value="XS">XS</option>
+              <option value="S">S</option>
+              <option value="M">M</option>
+              <option value="L">L</option>
+              <option value="XL">XL</option>
+              <option value="XXL">XXL</option>
+              <option value="Not sure yet">Not sure yet</option>
+            </select>
+            <p class="error" id="errTshirt" hidden>Please pick a T-shirt size.</p>
+          </div>
           <div class="field field-check">
             <input id="consent" name="consent" type="checkbox" required />
             <label for="consent">I confirm I am fit to walk ~20 km and agree to follow the marshals' guidance.</label>
