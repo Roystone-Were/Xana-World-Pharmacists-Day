@@ -20,7 +20,7 @@
 // Counter backend: built-in shared counter, or Upstash when
 // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are present.
 
-const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/AM3bvn_703hvTK_h/wPnChJ6NT-KwgAKb";
+const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/Lad2aDNnjM6vcgr0/I0hS5C0I0JRbElDM";
 const AT_URL = "https://api.africastalking.com/version1/messaging";
 const CARE_NUMBER = "+254142631157";
 
