@@ -178,7 +178,7 @@
         (mailWalker && email ? " A confirmation email was sent to " + email + "." : (email ? " A copy was also CC'd to " + email + "." : "")) +
         (smsSent && phone ? " A confirmation SMS was also sent to " + phone + "." : "");
       document.getElementById("formSuccess").hidden = false;
-      form.querySelectorAll("input").forEach(function (i) { i.disabled = true; });
+      form.querySelectorAll("input, select").forEach(function (i) { i.disabled = true; });
       submitBtn.style.display = "none";
       if (formNote) formNote.textContent = "A copy has been emailed to the organizing team.";
       try {
