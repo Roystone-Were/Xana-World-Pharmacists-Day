@@ -82,6 +82,66 @@
     return !bad;
   }
 
+  // Custom T-shirt dropdown (button + listbox, fully styleable unlike <select>).
+  var ddBtn = document.getElementById("tshirtBtn");
+  var ddList = document.getElementById("tshirtList");
+  var ddLabel = document.getElementById("tshirtBtnLabel");
+  var ddValue = document.getElementById("tshirt");
+  var ddOptions = ddList ? Array.prototype.slice.call(ddList.querySelectorAll('[role="option"]')) : [];
+  var ddActive = -1;
+
+  function ddClose() {
+    if (!ddList || ddList.hidden) return;
+    ddList.hidden = true;
+    ddBtn.setAttribute("aria-expanded", "false");
+  }
+  function ddOpen() {
+    ddList.hidden = false;
+    ddBtn.setAttribute("aria-expanded", "true");
+  }
+  function ddPick(opt) {
+    ddOptions.forEach(function (o) { o.setAttribute("aria-selected", "false"); });
+    opt.setAttribute("aria-selected", "true");
+    ddValue.value = opt.getAttribute("data-value");
+    ddLabel.textContent = opt.getAttribute("data-value");
+    ddBtn.classList.add("has-value");
+    ddClose();
+    ddBtn.focus();
+  }
+  if (ddBtn && ddList) {
+    ddBtn.addEventListener("click", function () {
+      if (ddBtn.disabled) return;
+      if (ddList.hidden) ddOpen(); else ddClose();
+    });
+    ddOptions.forEach(function (opt) {
+      opt.addEventListener("click", function () { ddPick(opt); });
+    });
+    document.addEventListener("click", function (e) {
+      if (!document.getElementById("tshirtDD").contains(e.target)) ddClose();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (ddList.hidden) return;
+      if (e.key === "Escape") { ddClose(); ddBtn.focus(); return; }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        ddActive = e.key === "ArrowDown"
+          ? Math.min(ddActive + 1, ddOptions.length - 1)
+          : Math.max(ddActive - 1, 0);
+        ddOptions.forEach(function (o) { o.classList.remove("dd-active"); });
+        var cur = ddOptions[ddActive];
+        if (cur) {
+          cur.classList.add("dd-active");
+          if (cur.scrollIntoView) cur.scrollIntoView({ block: "nearest" });
+        }
+        return;
+      }
+      if (e.key === "Enter" && ddActive >= 0 && ddOptions[ddActive]) {
+        e.preventDefault();
+        ddPick(ddOptions[ddActive]);
+      }
+    });
+  }
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     var name = document.getElementById("fullName").value.trim();
@@ -178,7 +238,7 @@
         (mailWalker && email ? " A confirmation email was sent to " + email + "." : (email ? " A copy was also CC'd to " + email + "." : "")) +
         (smsSent && phone ? " A confirmation SMS was also sent to " + phone + "." : "");
       document.getElementById("formSuccess").hidden = false;
-      form.querySelectorAll("input, select").forEach(function (i) { i.disabled = true; });
+      form.querySelectorAll("input, #tshirtBtn").forEach(function (i) { i.disabled = true; });
       submitBtn.style.display = "none";
       if (formNote) formNote.textContent = "A copy has been emailed to the organizing team.";
       try {

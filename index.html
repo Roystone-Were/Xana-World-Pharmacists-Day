@@ -220,17 +220,22 @@
             <p class="error" id="errEmail" hidden>That email address does not look valid. Leave it blank if you have none.</p>
           </div>
           <div class="field">
-            <label for="tshirt">T-shirt size</label>
-            <select id="tshirt" name="tshirt" required>
-              <option value="" selected>Select your size</option>
-              <option value="XS">XS</option>
-              <option value="S">S</option>
-              <option value="M">M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-              <option value="XXL">XXL</option>
-              <option value="Not sure yet">Not sure yet</option>
-            </select>
+            <label for="tshirtBtn">T-shirt size</label>
+            <div class="dd" id="tshirtDD">
+              <button type="button" class="dd-btn" id="tshirtBtn" aria-haspopup="listbox" aria-expanded="false">
+                <span id="tshirtBtnLabel" class="dd-placeholder">Select your size</span>
+              </button>
+              <ul class="dd-list" id="tshirtList" role="listbox" aria-label="T-shirt size" hidden>
+                <li role="option" data-value="XS" aria-selected="false" tabindex="-1">XS</li>
+                <li role="option" data-value="S" aria-selected="false" tabindex="-1">S</li>
+                <li role="option" data-value="M" aria-selected="false" tabindex="-1">M</li>
+                <li role="option" data-value="L" aria-selected="false" tabindex="-1">L</li>
+                <li role="option" data-value="XL" aria-selected="false" tabindex="-1">XL</li>
+                <li role="option" data-value="XXL" aria-selected="false" tabindex="-1">XXL</li>
+                <li role="option" data-value="Not sure yet" aria-selected="false" tabindex="-1">Not sure yet</li>
+              </ul>
+              <input type="hidden" id="tshirt" name="tshirt" value="" />
+            </div>
             <p class="error" id="errTshirt" hidden>Please pick a T-shirt size.</p>
           </div>
           <div class="field field-check">
