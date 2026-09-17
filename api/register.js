@@ -108,34 +108,39 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
+const LOGO_URL =
+  process.env.LOGO_URL || "https://xana-world-pharmacists-day.vercel.app/assets/logo.png";
+
 function mailShell(title, inner) {
   return (
-    '<!doctype html><html><body style="margin:0;padding:24px 12px;background-color:#2e2e2e;font-family:Arial,Helvetica,sans-serif;">' +
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">' +
-    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#101012;border:1px solid #3a3a3a;border-radius:16px;"><tr><td style="padding:36px 32px;text-align:center;">' +
-    '<div style="font-size:34px;font-weight:800;color:#f69320;letter-spacing:1px;">xana</div>' +
-    '<div style="font-size:22px;font-weight:800;color:#f69320;letter-spacing:6px;margin-top:2px;">LIFE</div>' +
-    '<div style="font-size:13px;color:#3d9e57;margin-top:4px;">Every Day Better</div>' +
-    '<div style="font-size:22px;font-weight:700;color:#ffffff;margin:22px 0 8px;">' + title + '</div>' +
+    '<!doctype html><html><head><meta charset="utf-8"/><meta name="color-scheme" content="light dark"/><meta name="supported-color-schemes" content="light dark"/>' +
+    '<style>@media (prefers-color-scheme: dark){.outer{background-color:#1c1c1e !important;}.card{background-color:#101012 !important;border-color:#3a3a3a !important;}.h1{color:#ffffff !important;}.sub{color:#b5b5b5 !important;}.rowbox{background-color:#1a1a1d !important;border-color:#2c2c30 !important;}.lbl{color:#8a8a8a !important;}.val{color:#ffffff !important;}.rule{border-color:#2c2c30 !important;}.foot,.caption{color:#8a8a8a !important;}}</style>' +
+    '</head><body style="margin:0;padding:24px 12px;background-color:#eef2ef;font-family:Arial,Helvetica,sans-serif;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" class="outer" style="background-color:#eef2ef;">' +
+    '<table role="presentation" width="560" cellpadding="0" cellspacing="0" class="card" style="max-width:560px;background-color:#ffffff;border:1px solid #dfe5e1;border-radius:16px;"><tr><td style="padding:36px 32px;text-align:center;">' +
+    '<div style="display:inline-block;background-color:#ffffff;border-radius:12px;padding:10px 22px;">' +
+    '<img src="' + LOGO_URL + '" width="200" alt="Xana Life, Every Day Better" style="display:block;width:200px;max-width:100%;height:auto;border:0;"/>' +
+    '</div>' +
+    '<div class="h1" style="font-size:22px;font-weight:700;color:#0f2a20;margin:22px 0 8px;">' + title + '</div>' +
     inner +
     '</td></tr></table>' +
-    '<div style="font-size:12px;color:#8a8a8a;margin-top:16px;">Xana World Pharmacists Day Walk</div>' +
+    '<div class="caption" style="font-size:12px;color:#7a8781;margin-top:16px;">Xana World Pharmacists Day Walk</div>' +
     '</td></tr></table></body></html>'
   );
 }
 
 function mailRow(label, value) {
   return (
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;background-color:#1a1a1d;border:1px solid #2c2c30;border-radius:10px;"><tr>' +
-    '<td style="padding:10px 14px;text-align:left;font-size:13px;color:#8a8a8a;">' + label + '</td>' +
-    '<td style="padding:10px 14px;text-align:left;font-size:14px;font-weight:700;color:#ffffff;">' + value + '</td>' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="rowbox" style="margin-top:10px;background-color:#f2f6f3;border:1px solid #e2e8e4;border-radius:10px;"><tr>' +
+    '<td class="lbl" style="padding:10px 14px;text-align:left;font-size:13px;color:#6b7a71;">' + label + '</td>' +
+    '<td class="val" style="padding:10px 14px;text-align:left;font-size:14px;font-weight:700;color:#14231c;">' + value + '</td>' +
     '</tr></table>'
   );
 }
 
 function mailButton(text, url) {
   return (
-    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;"><tr><td align="center" style="background-color:#2e7d46;border-radius:10px;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;"><tr><td align="center" style="background-color:#005c3a;border-radius:10px;">' +
     '<a href="' + url + '" style="display:block;padding:14px 20px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">' + text + '</a>' +
     '</td></tr></table>'
   );
@@ -143,7 +148,7 @@ function mailButton(text, url) {
 
 function mailDivider(note) {
   return (
-    '<div style="border-top:1px solid #2c2c30;margin-top:22px;padding-top:14px;font-size:12px;color:#8a8a8a;line-height:1.6;">' + note + '</div>'
+    '<div class="rule foot" style="border-top:1px solid #e2e8e4;margin-top:22px;padding-top:14px;font-size:12px;color:#7a8781;line-height:1.6;">' + note + '</div>'
   );
 }
 
@@ -153,7 +158,7 @@ function walkerMailHtml(d) {
     encodeURIComponent("Hello Xana Life, I have a question about the World Pharmacists Day Walk. My reference is " + d.reference + ".");
   return mailShell(
     "Karibu, " + esc(d.firstName) + "!",
-    '<div style="font-size:15px;color:#b5b5b5;line-height:1.6;">You are registered for the Xana World Pharmacists Day Walk.</div>' +
+    '<div class="sub" style="font-size:15px;color:#5b6a61;line-height:1.6;">You are registered for the Xana World Pharmacists Day Walk.</div>' +
       mailRow("Walk day", "Saturday 26 September 2026") +
       mailRow("Assemble", "TRM Mall from 6:00 AM") +
       mailRow("Step-off", "6:30 AM sharp") +
@@ -167,7 +172,7 @@ function walkerMailHtml(d) {
 function organizerMailHtml(d) {
   return mailShell(
     "New walker registered",
-    '<div style="font-size:15px;color:#b5b5b5;line-height:1.6;">' + esc(d.name || "A walker") + ' just signed up for the walk.</div>' +
+    '<div class="sub" style="font-size:15px;color:#5b6a61;line-height:1.6;">' + esc(d.name || "A walker") + ' just signed up for the walk.</div>' +
       mailRow("Reference", esc(d.reference)) +
       mailRow("Full name", esc(d.name)) +
       mailRow("Phone", esc(d.phone)) +
