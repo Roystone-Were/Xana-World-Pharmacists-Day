@@ -89,7 +89,10 @@ The resulting `https://…vercel.app` link is what you send to participants.
 The site has a separate organizers-only page at `https://…vercel.app/count`
 showing the live total. It ticks on every confirmation screen via
 `POST /api/register` and needs no setup: it uses a built-in shared counter
-backend (aggregates only, no personal data).
+backend (aggregates only, no personal data). It also shows a **T-shirts
+needed** breakdown per size plus a total, tracked the same way from each
+registration's chosen size. Size tracking starts the moment this deploys;
+earlier sign-ups count toward the total only.
 
 Optional upgrade (per-day breakdown): create a free database at
 https://upstash.com (Redis, region near Nairobi), then in Vercel go to

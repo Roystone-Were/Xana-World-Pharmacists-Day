@@ -40,6 +40,11 @@
           <ul class="count-day-list" id="countDayList"></ul>
         </div>
 
+        <div class="count-days" id="countSizesWrap" hidden>
+          <h2>T-shirts needed</h2>
+          <ul class="count-day-list" id="countSizesList"></ul>
+        </div>
+
         <div class="form-success" id="countSetup" hidden>
           <h3>Counter not connected yet.</h3>
           <p id="countSetupText">Add the Upstash env vars in Vercel (see README section 6), then redeploy. Email registrations are unaffected.</p>
@@ -97,6 +102,35 @@
               li.appendChild(b);
               dayList.appendChild(li);
             });
+          }
+          var sizesWrap = document.getElementById("countSizesWrap");
+          var sizesList = document.getElementById("countSizesList");
+          var sizes = d.sizes && typeof d.sizes === "object" ? d.sizes : {};
+          var sizeNames = Object.keys(sizes);
+          if (sizeNames.length) {
+            sizesWrap.hidden = false;
+            sizesList.innerHTML = "";
+            var shirtsTotal = 0;
+            sizeNames.forEach(function (size) {
+              var n = Number(sizes[size]) || 0;
+              shirtsTotal += n;
+              var li = document.createElement("li");
+              var s = document.createElement("span");
+              s.textContent = size === "Not sure yet" ? "Not sure yet" : "Size " + size;
+              var b = document.createElement("strong");
+              b.textContent = n;
+              li.appendChild(s);
+              li.appendChild(b);
+              sizesList.appendChild(li);
+            });
+            var totalLi = document.createElement("li");
+            var totalS = document.createElement("span");
+            totalS.textContent = "Total shirts";
+            var totalB = document.createElement("strong");
+            totalB.textContent = shirtsTotal;
+            totalLi.appendChild(totalS);
+            totalLi.appendChild(totalB);
+            sizesList.appendChild(totalLi);
           }
         } catch (e) {
           totalEl.textContent = "...";

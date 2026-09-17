@@ -21,6 +21,19 @@
 // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are present.
 
 const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/Lad2aDNnjM6vcgr0/I0hS5C0I0JRbElDM";
+
+// One shared counter per T-shirt size: [namespace, key]. Public by design
+// (counters only, no personal data). Sizes always tracked here so the
+// breakdown works with zero setup, whatever the main counter backend is.
+const SIZE_COUNTERS = {
+  "XS": ["-QHC3wr4w34QVTvc", "6e2VJG4vUZOlTQFZ"],
+  "S": ["8qItEmpUOIwYMG-G", "lCt-EPZXcwuQRaMv"],
+  "M": ["BNFoU0A62cDpqe7G", "ekoQPA_iAfKgPS0V"],
+  "L": ["leJ9rm_yoRoJJJ4W", "4MkIKgpYHnZatumI"],
+  "XL": ["7sAV7EO6fovmvMD-", "IMKhaAX19KxZly2c"],
+  "XXL": ["XvIxzcWoBgL2oUbx", "FE3e3k7xU3M1zLwv"],
+  "Not sure yet": ["3BNcQ-0L_BIzpFy4", "MNJIGphgrUOCwjvU"],
+};
 const AT_URL = "https://api.africastalking.com/version1/messaging";
 const CARE_NUMBER = "+254142631157";
 
@@ -291,6 +304,14 @@ module.exports = async function handler(req, res) {
     } else {
       total = await countViaShared();
       backend = "shared";
+    }
+
+    // T-shirt size breakdown (best-effort, never fails the registration).
+    const sizeCounter = SIZE_COUNTERS[walkerTshirt];
+    if (sizeCounter) {
+      try {
+        await fetch("https://abacus.jasoncameron.dev/hit/" + sizeCounter[0] + "/" + sizeCounter[1]);
+      } catch (e) { /* sizes are indicative */ }
     }
 
     const mail = { organizer: false, walker: false };
