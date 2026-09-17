@@ -100,43 +100,27 @@
 
     var ref = "XANA-" + new Date().getFullYear() + "-" + Math.random().toString(36).slice(2, 7).toUpperCase();
 
-    var payload = {
-      _subject: cfg.formSubject || "New registration: Xana World Pharmacists Day Walk",
-      _template: "table",
-      _captcha: "false",
-      // Walker copy: CC the walker on the registration email so they
-      // receive the full details + reference at their own address.
-      // Organizer replies go straight to the walker.
-      // Email is optional: when blank, only the organizer is mailed.
-      "Event": cfg.eventName || "Xana World Pharmacists Day Walk",
-      "Reference": ref,
-      "Full name": name,
-      "Phone number": phone,
-      "Email address": email || "Not provided",
-      "Fitness and safety consent": "Yes, fit to walk and will follow marshals",
-      "Submitted at": new Date().toISOString(),
-    };
-
-    if (email) {
-      payload._cc = email;
-      payload._replyto = email;
-    }
-
-    fetch("https://formsubmit.co/ajax/" + encodeURIComponent(ORGANIZER_EMAIL), {
+    // Primary path: our own backend sends fully-worded Mailgun mail
+    // (organizer + walker), ticks the counter and triggers the SMS.
+    fetch("./api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ reference: ref, name: name, phone: phone, email: email }),
     })
       .then(function (res) {
-        if (!res.ok) throw new Error("Submit failed");
+        if (!res.ok) throw new Error("Register failed");
         return res.json();
       })
-      .then(function () {
-        done(true, ref);
+      .then(function (data) {
+        if (data && data.mail && data.mail.organizer) {
+          done(true, ref, data);
+        } else {
+          // Mailgun not configured: fall back to FormSubmit for the organizer mail.
+          sendOrganizerMail(function () { done(true, ref, data); });
+        }
       })
       .catch(function () {
-        // Fallback: open the organizer's inbox with prefilled details so no one is lost,
-        // but still show success locally and keep a local count.
+        // Last resort: open the organizer inbox with prefilled details.
         try {
           var body = "New walk registration%0D%0A%0D%0AName: " + encodeURIComponent(name) +
             "%0D%0APhone: " + encodeURIComponent(phone) +
@@ -145,37 +129,51 @@
           window.location.href = "mailto:" + ORGANIZER_EMAIL + "?subject=" +
             encodeURIComponent("Walk registration: " + name) + "&body=" + body;
         } catch (err) { /* noop */ }
-        done(true, ref);
+        done(true, ref, null);
       });
 
-    function done(ok, reference) {
+    function sendOrganizerMail(next) {
+      var payload = {
+        _subject: cfg.formSubject || "New registration: Xana World Pharmacists Day Walk",
+        _template: "table",
+        _captcha: "false",
+        "Event": cfg.eventName || "Xana World Pharmacists Day Walk",
+        "Reference": ref,
+        "Full name": name,
+        "Phone number": phone,
+        "Email address": email || "Not provided",
+        "Fitness and safety consent": "Yes, fit to walk and will follow marshals",
+        "Submitted at": new Date().toISOString(),
+      };
+      if (email) {
+        payload._cc = email;
+        payload._replyto = email;
+      }
+      fetch("https://formsubmit.co/ajax/" + encodeURIComponent(ORGANIZER_EMAIL), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then(function (res) {
+          if (!res.ok) throw new Error("Submit failed");
+          return res.json();
+        })
+        .then(function () { next(); })
+        .catch(function () { next(); });
+    }
+
+    function done(ok, reference, data) {
       submitBtn.disabled = false;
       submitBtn.textContent = "Submit registration";
       if (!ok) return;
-      // Tick the live counter + trigger the walker SMS (fire and forget:
-      // email is the source of truth).
-      try {
-        fetch("./api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reference: reference, name: name, phone: phone }),
-        })
-          .then(function (r) {
-            return r.ok ? r.json() : null;
-          })
-          .then(function (data) {
-            if (data && data.sms && phone) {
-              document.getElementById("successMsg").textContent +=
-                " A confirmation SMS was also sent to " + phone + ".";
-            }
-          })
-          .catch(function () {});
-      } catch (err) {}
       document.getElementById("regRef").textContent = reference;
+      var mailWalker = !!(data && data.mail && data.mail.walker);
+      var smsSent = !!(data && data.sms);
       document.getElementById("successMsg").textContent =
         "Karibu! See you at TRM Mall on Saturday 26 Sept by 6:00 AM. " +
         "Your details were sent to the organizing team." +
-        (email ? " A copy was CC'd to " + email + "." : "");
+        (mailWalker && email ? " A confirmation email was sent to " + email + "." : (email ? " A copy was also CC'd to " + email + "." : "")) +
+        (smsSent && phone ? " A confirmation SMS was also sent to " + phone + "." : "");
       document.getElementById("formSuccess").hidden = false;
       form.querySelectorAll("input").forEach(function (i) { i.disabled = true; });
       submitBtn.style.display = "none";

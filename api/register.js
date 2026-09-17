@@ -1,7 +1,15 @@
-// POST /api/register: counter + walker SMS confirmation.
-// Body: { reference: "XANA-2026-ABCDE", name: "...", phone: "..." }
+// POST /api/register: counter + email + walker SMS confirmation.
+// Body: { reference: "XANA-2026-ABCDE", name: "...", phone: "...", email: "..." }
 // Counter stores aggregates only. The phone number is used transiently to
 // send the confirmation SMS and is never stored.
+//
+// Email via Mailgun (full control of subject and body), needs Vercel env vars:
+//   MG_API_KEY, MG_DOMAIN, ORGANIZER_EMAIL (who receives the signup mail)
+//   MG_API_BASE  (optional, for EU accounts: https://api.eu.mailgun.net)
+//   MG_FROM      (optional sender label, default "Xana Walk <walk@DOMAIN>")
+// Without MG_* vars no Mailgun mail is sent; the site falls back to
+// FormSubmit for the organizer mail (see script.js), and email + counter
+// keep working regardless.
 //
 // SMS via Africa's Talking, needs Vercel env vars:
 //   AT_API_KEY, AT_USERNAME            (required for SMS, see README 8)
@@ -88,6 +96,66 @@ async function countViaShared() {
   return Number(out.value);
 }
 
+function isEmail(s) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || ""));
+}
+
+async function sendMailgun({ to, subject, text, replyTo }) {
+  const apiKey = process.env.MG_API_KEY;
+  const domain = process.env.MG_DOMAIN;
+  if (!apiKey || !domain || !to) return false;
+  try {
+    const base = (process.env.MG_API_BASE || "https://api.mailgun.net").replace(/\/$/, "");
+    const from = process.env.MG_FROM || "Xana Walk <walk@" + domain + ">";
+    const params = new URLSearchParams({ from, to, subject, text });
+    if (replyTo) params.append("h:Reply-To", replyTo);
+    const auth = Buffer.from("api:" + apiKey).toString("base64");
+    const r = await fetch(base + "/v3/" + domain + "/messages", {
+      method: "POST",
+      headers: {
+        Authorization: "Basic " + auth,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    });
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function organizerMailText(d) {
+  return [
+    "A new walker registered for the Xana World Pharmacists Day Walk.",
+    "",
+    "Event: " + d.event,
+    "Reference: " + d.reference,
+    "Full name: " + d.name,
+    "Phone number: " + d.phone,
+    "Email address: " + (d.email || "Not provided"),
+    "Fitness and safety consent: Yes, fit to walk and will follow marshals",
+    "Submitted at: " + d.submittedAt,
+    "",
+    "This is an automated registration notice. Reply to this email to reach the walker directly (when an email address was provided).",
+  ].join("\n");
+}
+
+function walkerMailText(d) {
+  return [
+    "Karibu " + d.firstName + "! You are registered for the Xana World Pharmacists Day Walk.",
+    "",
+    "Walk day: Saturday 26 September 2026 (in celebration of World Pharmacists Day, Fri 25 Sept).",
+    "Assemble at TRM Mall from 6:00 AM. Walk starts 6:30 AM sharp.",
+    "Finish: Xana Plus, Ruiru. About 20 km, around 4 hours on foot.",
+    "",
+    "Bring comfortable walking shoes, water and sun protection.",
+    "",
+    "Your reference: " + d.reference + " (also shown on your confirmation screen).",
+    "",
+    "Enquiries: " + CARE_NUMBER + ". See you there. Xana Life.",
+  ].join("\n");
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Content-Type", "application/json");
   res.setHeader("Cache-Control", "no-store");
@@ -110,6 +178,9 @@ module.exports = async function handler(req, res) {
   }
   const walkerName = body && typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
   const walkerPhone = body && typeof body.phone === "string" ? body.phone.trim().slice(0, 30) : "";
+  const walkerEmail = body && typeof body.email === "string" ? body.email.trim().slice(0, 120) : "";
+  const emailOk = isEmail(walkerEmail);
+  const organizerEmail = process.env.ORGANIZER_EMAIL || "";
 
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -123,6 +194,34 @@ module.exports = async function handler(req, res) {
     } else {
       total = await countViaShared();
       backend = "shared";
+    }
+
+    const mail = { organizer: false, walker: false };
+    if (organizerEmail) {
+      const detail = {
+        event: "Xana World Pharmacists Day Walk",
+        reference,
+        name: walkerName,
+        phone: walkerPhone,
+        email: walkerEmail,
+        submittedAt: new Date().toISOString(),
+      };
+      mail.organizer = await sendMailgun({
+        to: organizerEmail,
+        subject: "New walker registered: " + (walkerName || "Walker") + " (" + reference + ")",
+        text: organizerMailText(detail),
+        replyTo: emailOk ? walkerEmail : undefined,
+      });
+      if (emailOk) {
+        mail.walker = await sendMailgun({
+          to: walkerEmail,
+          subject: "You are registered: Xana World Pharmacists Day Walk",
+          text: walkerMailText({
+            firstName: (walkerName.split(" ")[0] || "Walker").slice(0, 20),
+            reference,
+          }),
+        });
+      }
     }
 
     let sms = false;
@@ -147,8 +246,8 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ ok: true, counted: true, total, backend, sms });
+    return res.status(200).json({ ok: true, counted: true, total, backend, sms, mail });
   } catch (e) {
-    return res.status(200).json({ ok: false, counted: false, reason: "counter-error", sms: false });
+    return res.status(200).json({ ok: false, counted: false, reason: "counter-error", sms: false, mail: { organizer: false, walker: false } });
   }
 };

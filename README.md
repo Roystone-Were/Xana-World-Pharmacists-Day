@@ -8,13 +8,13 @@ Manrope display + Plus Jakarta Sans body.
 
 ## 1. Set your email (required, 1 minute)
 
-Every registration is emailed to the organizer. Open `config.js` and replace:
+Every registration is emailed to the organizer. There are two senders:
 
-```js
-organizerEmail: "organizer@xanapharmacy.com",
-```
-
-with your real inbox, e.g. `organizerEmail: "you@xanapharmacy.co.ke",`.
+- **Mailgun (preferred):** full control of subject and body, reliable walker
+  copies. One-time setup, see section 7.
+- **FormSubmit fallback (works today, no setup):** used automatically until
+  Mailgun is configured. Open `config.js` and set `organizerEmail`, e.g.
+  `organizerEmail: "you@xanapharmacy.co.ke",`.
 
 It uses **FormSubmit (free, no backend)**. The first submission triggers a
 one-time activation email from FormSubmit to that inbox. Click **Activate**,
@@ -23,6 +23,31 @@ and every later sign-up flows straight in with the subject
 the same email so they receive the details and reference (`_cc`), and
 organizer replies go straight to the walker (`_replyto`). Note: FormSubmit's
 `_autoresponse` cannot fire over AJAX, so it is intentionally not used.
+
+## 7. Email via Mailgun (one-time setup, preferred sender)
+
+Mailgun sends fully-worded organizer and walker emails (no FormSubmit
+wrapper text) and reports delivery per message in its dashboard Logs.
+
+1. Sign up at https://www.mailgun.com. Add your domain: Sending → Domains →
+   Add New Domain, enter `xanalife.com` (or a subdomain like
+   `mail.xanalife.com`; the From address must live on the verified domain).
+2. Add the DNS records Mailgun shows (two TXT records for SPF/DKIM, plus the
+   tracking CNAME) where your DNS is hosted, then verify in Mailgun.
+3. Copy the **Private API key** (Settings → API Keys) and note the API region:
+   US accounts use `https://api.mailgun.net`, EU accounts use
+   `https://api.eu.mailgun.net`.
+4. In Vercel: project → Settings → Environment Variables, add
+   `MG_API_KEY`, `MG_DOMAIN` (e.g. `xanalife.com`),
+   `ORGANIZER_EMAIL` (e.g. `joywincate@xanalife.com`),
+   `MG_FROM` (e.g. `Xana Walk <walk@xanalife.com>`), and if EU,
+   `MG_API_BASE=https://api.eu.mailgun.net`. Then redeploy.
+5. Test with your own address first. Until step 4 is done, the site keeps
+   using the FormSubmit fallback automatically.
+
+Sandbox note: Mailgun sandbox domains only deliver to Authorized Recipients
+you add in the dashboard, so verify the real domain (step 2) before inviting
+walkers. Volumes here are tiny; Mailgun includes trial sends.
 
 ## 2. Preview locally
 
