@@ -1,21 +1,24 @@
 // GET /api/count: live registration numbers for the /count page.
 // Answers: { configured, total, days: {...}, sizes: {"M": 12, ...} }
-// Aggregates only. No personal data is stored or returned.
+// With a valid organizer key (?key=COUNT_KEY) it also answers the
+// attendance roster: roster: [{ ref, name, phone, email, size, at }].
+// Personal data is never returned without the key.
 //
 // Backend: built-in shared counters (works with zero setup).
-// With Upstash env vars set, answers also include the per-day breakdown.
+// With Upstash env vars set, answers also include the per-day breakdown
+// and the key-gated roster.
 
-const SHARED_GET_URL = "https://abacus.jasoncameron.dev/get/Lad2aDNnjM6vcgr0/I0hS5C0I0JRbElDM";
+const SHARED_GET_URL = "https://abacus.jasoncameron.dev/get/xana-walk-2026/Feq1lPfkt_GNnCfy";
 
 // Mirrors api/register.js. One counter per T-shirt size: [namespace, key].
 const SIZE_COUNTERS = {
-  "XS": ["-QHC3wr4w34QVTvc", "6e2VJG4vUZOlTQFZ"],
-  "S": ["8qItEmpUOIwYMG-G", "lCt-EPZXcwuQRaMv"],
-  "M": ["BNFoU0A62cDpqe7G", "ekoQPA_iAfKgPS0V"],
-  "L": ["leJ9rm_yoRoJJJ4W", "4MkIKgpYHnZatumI"],
-  "XL": ["7sAV7EO6fovmvMD-", "IMKhaAX19KxZly2c"],
-  "XXL": ["XvIxzcWoBgL2oUbx", "FE3e3k7xU3M1zLwv"],
-  "Not sure yet": ["3BNcQ-0L_BIzpFy4", "MNJIGphgrUOCwjvU"],
+  "XS": ["xana-walk-2026", "xOEKDK3rrhaguBgT"],
+  "S": ["xana-walk-2026", "9ithg68LeMPS_Ubi"],
+  "M": ["xana-walk-2026", "M_sy7wqoMg6h1xSt"],
+  "L": ["xana-walk-2026", "14gDeVhI8YFqYThR"],
+  "XL": ["xana-walk-2026", "rJTpjy41vGIR71xv"],
+  "XXL": ["xana-walk-2026", "DAz6O1I3rvDd2Ea2"],
+  "Not sure yet": ["xana-walk-2026", "9eTCSBC97kg7vvBe"],
 };
 
 async function getSharedSizes() {
@@ -44,14 +47,19 @@ module.exports = async function handler(req, res) {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   const smsReady = !!(process.env.AT_API_KEY && process.env.AT_USERNAME);
 
-  // Preferred backend: Upstash (total + per-day).
+  // Preferred backend: Upstash (total + per-day + key-gated roster).
   if (url && token) {
+    const countKey = process.env.COUNT_KEY || "";
+    const givenKey = req.query && typeof req.query.key === "string" ? req.query.key : "";
+    const rosterAllowed = countKey.length >= 12 && givenKey !== "" && givenKey === countKey;
     const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
     try {
+      const commands = [["GET", "xana-walk:total"], ["HGETALL", "xana-walk:days"]];
+      if (rosterAllowed) commands.push(["HGETALL", "xana-walk:roster"]);
       const r = await fetch(`${url}/pipeline`, {
         method: "POST",
         headers,
-        body: JSON.stringify([["GET", "xana-walk:total"], ["HGETALL", "xana-walk:days"]]),
+        body: JSON.stringify(commands),
       });
       if (!r.ok) throw new Error(`upstash-${r.status}`);
       const out = await r.json();
@@ -61,7 +69,29 @@ module.exports = async function handler(req, res) {
       for (let i = 0; i < flat.length; i += 2) {
         days[flat[i]] = Number(flat[i + 1]);
       }
-      return res.status(200).json({ configured: true, total, days, sizes: await getSharedSizes(), backend: "upstash", sms: smsReady });
+      const answer = { configured: true, total, days, sizes: await getSharedSizes(), backend: "upstash", sms: smsReady, roster: null };
+      const rflat = rosterAllowed && out[2] && Array.isArray(out[2].result) ? out[2].result : null;
+      if (rflat) {
+        const roster = [];
+        for (let i = 0; i < rflat.length; i += 2) {
+          try {
+            const entry = JSON.parse(rflat[i + 1]);
+            roster.push({
+              ref: rflat[i],
+              name: String(entry.n || "").slice(0, 60),
+              phone: String(entry.p || "").slice(0, 30),
+              email: String(entry.e || "").slice(0, 120),
+              size: String(entry.s || "").slice(0, 15),
+              at: String(entry.d || ""),
+            });
+          } catch (e) {
+            roster.push({ ref: rflat[i], name: "", phone: "", email: "", size: "", at: "" });
+          }
+        }
+        roster.sort((a, b) => (a.ref < b.ref ? -1 : 1));
+        answer.roster = roster;
+      }
+      return res.status(200).json(answer);
     } catch (e) {
       return res.status(500).json({ configured: true, total: null, days: {}, sizes: {}, error: "counter-error", sms: smsReady });
     }

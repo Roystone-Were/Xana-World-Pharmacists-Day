@@ -20,19 +20,19 @@
 // Counter backend: built-in shared counter, or Upstash when
 // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are present.
 
-const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/Lad2aDNnjM6vcgr0/I0hS5C0I0JRbElDM";
+const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/xana-walk-2026/Feq1lPfkt_GNnCfy";
 
 // One shared counter per T-shirt size: [namespace, key]. Public by design
 // (counters only, no personal data). Sizes always tracked here so the
 // breakdown works with zero setup, whatever the main counter backend is.
 const SIZE_COUNTERS = {
-  "XS": ["-QHC3wr4w34QVTvc", "6e2VJG4vUZOlTQFZ"],
-  "S": ["8qItEmpUOIwYMG-G", "lCt-EPZXcwuQRaMv"],
-  "M": ["BNFoU0A62cDpqe7G", "ekoQPA_iAfKgPS0V"],
-  "L": ["leJ9rm_yoRoJJJ4W", "4MkIKgpYHnZatumI"],
-  "XL": ["7sAV7EO6fovmvMD-", "IMKhaAX19KxZly2c"],
-  "XXL": ["XvIxzcWoBgL2oUbx", "FE3e3k7xU3M1zLwv"],
-  "Not sure yet": ["3BNcQ-0L_BIzpFy4", "MNJIGphgrUOCwjvU"],
+  "XS": ["xana-walk-2026", "xOEKDK3rrhaguBgT"],
+  "S": ["xana-walk-2026", "9ithg68LeMPS_Ubi"],
+  "M": ["xana-walk-2026", "M_sy7wqoMg6h1xSt"],
+  "L": ["xana-walk-2026", "14gDeVhI8YFqYThR"],
+  "XL": ["xana-walk-2026", "rJTpjy41vGIR71xv"],
+  "XXL": ["xana-walk-2026", "DAz6O1I3rvDd2Ea2"],
+  "Not sure yet": ["xana-walk-2026", "9eTCSBC97kg7vvBe"],
 };
 const AT_URL = "https://api.africastalking.com/version1/messaging";
 const CARE_NUMBER = "+254142631157";
@@ -85,17 +85,36 @@ async function sendSms(to, message) {
   }
 }
 
-async function countViaUpstash(url, token, reference, day) {
+// Idempotent record: the roster row is written only for a new reference,
+// so re-submissions append nothing again.
+async function countViaUpstash(url, token, reference, day, detail) {
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-  // INCR total, HINCRBY per-day bucket, SADD reference (dedupe log).
+  const commands = [
+    ["INCR", "xana-walk:total"],
+    ["HINCRBY", "xana-walk:days", day, "1"],
+    ["SADD", "xana-walk:refs", reference],
+  ];
+  if (detail) {
+    // HSETNX writes the per-person row only for a new reference. Best-effort:
+    // never fails the registration.
+    commands.push([
+      "HSETNX",
+      "xana-walk:roster",
+      reference,
+      JSON.stringify({
+        n: String(detail.name || "").slice(0, 60),
+        p: String(detail.phone || "").slice(0, 30),
+        e: String(detail.email || "").slice(0, 120),
+        s: String(detail.tshirt || "").slice(0, 15),
+        d: String(detail.submittedAt || ""),
+        m: String(detail.mail || ""),
+      }),
+    ]);
+  }
   const r = await fetch(`${url}/pipeline`, {
     method: "POST",
     headers,
-    body: JSON.stringify([
-      ["INCR", "xana-walk:total"],
-      ["HINCRBY", "xana-walk:days", day, "1"],
-      ["SADD", "xana-walk:refs", reference],
-    ]),
+    body: JSON.stringify(commands),
   });
   if (!r.ok) throw new Error(`upstash-${r.status}`);
   const out = await r.json();
@@ -299,7 +318,13 @@ module.exports = async function handler(req, res) {
     let total;
     let backend;
     if (url && token) {
-      total = await countViaUpstash(url, token, reference, nairobiDay());
+      total = await countViaUpstash(url, token, reference, nairobiDay(), {
+        name: walkerName,
+        phone: walkerPhone,
+        email: walkerEmail,
+        tshirt: walkerTshirt,
+        submittedAt: new Date().toISOString(),
+      });
       backend = "upstash";
     } else {
       total = await countViaShared();
