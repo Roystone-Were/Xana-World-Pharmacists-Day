@@ -7,6 +7,7 @@
   --brand-dark: #004a2e;
   --brand-tint: #e9f3ed;
   --accent: #f58a07;
+  --alert: #ff6f52;
   --cream: #faf8f6;
   --ink: #1f2a24;
   --muted: #5b6a61;
@@ -39,6 +40,11 @@ a { color: inherit; }
   background: var(--brand); color: #fff; padding: 10px 16px; z-index: 100;
 }
 .skip:focus { left: 8px; top: 8px; border-radius: 8px; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 
@@ -135,6 +141,68 @@ a { color: inherit; }
 .countdown-label { font-size: 12.5px; opacity: 0.8; font-weight: 600; }
 .countdown { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 2px; }
 .countdown-sub { font-size: 13px; opacity: 0.8; margin-top: 2px; }
+
+/* Countdown component: shared by the top deadline bar and the hero card.
+   script.js rewrites the four numbers each second, pulses .cd-secs, and sets
+   body[data-urgency] so urgency reads at a glance. Digits are never turned
+   into a flashing block: the escalation is colour, glow, blinking colons and
+   a dot ping. */
+.countdown, .countdown-mini {
+  display: inline-flex; align-items: baseline;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.5s ease;
+  visibility: hidden; /* revealed once script.js sets data-urgency */
+}
+body[data-urgency] .countdown,
+body[data-urgency] .countdown-mini { visibility: visible; }
+.cd-parts { display: inline-flex; align-items: baseline; }
+.cd-seg, .cd-days { display: inline-flex; align-items: baseline; }
+.cd-days.is-off { display: none; } /* under a day left: hours lead, as before */
+.cd-num { font-variant-numeric: tabular-nums; }
+.cd-unit { font-size: 0.72em; font-weight: 600; opacity: 0.85; margin-left: 1px; }
+.countdown-mini .cd-unit { font-size: 0.85em; } /* 13.5px bar: don't shrink below ~11px */
+.cd-sep { opacity: 0.6; padding: 0 2px; }
+.cd-tail { opacity: 0.75; margin-left: 3px; }
+.cd-closed { display: none; }
+
+/* Urgency glow, not opacity: the digits stay fully legible while the colour
+   breathes. Kept off the element's opacity so it never multiplies with the
+   per-second pulse running on the seconds group. */
+@keyframes cd-glow-warn {
+  0%, 100% { text-shadow: 0 0 0 rgba(245, 138, 7, 0); }
+  50% { text-shadow: 0 0 14px rgba(245, 138, 7, 0.6); }
+}
+@keyframes cd-glow-urgent {
+  0%, 100% { text-shadow: 0 0 0 rgba(255, 111, 82, 0); }
+  50% { text-shadow: 0 0 16px rgba(255, 111, 82, 0.7); }
+}
+@keyframes cd-colon { 0%, 49% { opacity: 0.6; } 50%, 100% { opacity: 0.22; } }
+@keyframes cd-dot {
+  0% { box-shadow: 0 0 0 0 rgba(245, 138, 7, 0.55); }
+  70% { box-shadow: 0 0 0 10px rgba(245, 138, 7, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(245, 138, 7, 0); }
+}
+
+/* Final 24 hours: amber, slow glow, blinking clock colons, pinging dot. */
+body[data-urgency="warn"] .countdown, body[data-urgency="warn"] .countdown-mini {
+  color: var(--accent);
+  animation: cd-glow-warn 2.6s ease-in-out infinite;
+}
+body[data-urgency="warn"] .cd-sep { animation: cd-colon 1s steps(1, end) infinite; }
+body[data-urgency="warn"] .deadline-bar .dot { animation: cd-dot 1.8s ease-out infinite; }
+
+/* Final 6 hours: red, faster glow, faster dot ping, harder second pulse. */
+body[data-urgency="urgent"] .countdown, body[data-urgency="urgent"] .countdown-mini {
+  color: var(--alert);
+  animation: cd-glow-urgent 1.15s ease-in-out infinite;
+}
+body[data-urgency="urgent"] .cd-sep { animation: cd-colon 1s steps(1, end) infinite; }
+body[data-urgency="urgent"] .deadline-bar .dot { background: var(--alert); animation: cd-dot 0.9s ease-out infinite; }
+
+body[data-urgency="closed"] .cd-parts,
+body[data-urgency="closed"] .cd-lead,
+body[data-urgency="closed"] .cd-tail { display: none; }
+body[data-urgency="closed"] .cd-closed { display: inline; color: var(--alert); font-weight: 700; }
 
 /* Stats */
 .stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fff; }
@@ -332,4 +400,16 @@ img { max-width: 100%; }
   html { scroll-behavior: auto; }
   .btn { transition: none; }
   .btn-pulse { animation: none; }
+  /* Urgency keeps its colour + steady halo, minus every blink. */
+  body[data-urgency="warn"] .countdown, body[data-urgency="warn"] .countdown-mini,
+  body[data-urgency="urgent"] .countdown, body[data-urgency="urgent"] .countdown-mini,
+  body[data-urgency="warn"] .cd-sep, body[data-urgency="urgent"] .cd-sep,
+  body[data-urgency="warn"] .deadline-bar .dot, body[data-urgency="urgent"] .deadline-bar .dot { animation: none; }
+  body[data-urgency="warn"] .deadline-bar .dot { box-shadow: 0 0 0 3px rgba(245, 138, 7, 0.35); }
+  body[data-urgency="urgent"] .deadline-bar .dot { box-shadow: 0 0 0 3px rgba(255, 111, 82, 0.4); }
+  /* Steady halo instead of the breathing glow: same signal, no motion. */
+  body[data-urgency="warn"] .countdown,
+  body[data-urgency="warn"] .countdown-mini { text-shadow: 0 0 12px rgba(245, 138, 7, 0.45); }
+  body[data-urgency="urgent"] .countdown,
+  body[data-urgency="urgent"] .countdown-mini { text-shadow: 0 0 14px rgba(255, 111, 82, 0.5); }
 }

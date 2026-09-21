@@ -14,11 +14,19 @@
 <body>
   <a class="skip" href="#register">Skip to registration</a>
 
-  <!-- Top deadline bar -->
-  <div class="deadline-bar" role="status">
+  <!-- Top deadline bar. The ticking countdown is decorative for AT: the exact
+       deadline is spelled out next to it. -->
+  <div class="deadline-bar">
     <span class="dot" aria-hidden="true"></span>
     <span>Registration closes <strong id="deadlineLabelTop">Wednesday 23 Sept · 9:00 PM EAT</strong></span>
-    <span class="countdown-mini" id="countdownMini">...</span>
+    <span class="countdown-mini" id="countdownMini" data-cd>
+      <span class="cd-lead" aria-hidden="true">·</span>
+      <span class="cd-parts" aria-hidden="true">
+        <span class="cd-days" data-cd-days><span class="cd-num" data-cd-num="d"></span><span class="cd-unit">d</span><span class="cd-sep">:</span></span><span class="cd-seg"><span class="cd-num" data-cd-num="h"></span><span class="cd-unit">h</span></span><span class="cd-sep">:</span><span class="cd-seg"><span class="cd-num" data-cd-num="m"></span><span class="cd-unit">m</span></span><span class="cd-sep">:</span><span class="cd-seg cd-secs"><span class="cd-num" data-cd-num="s"></span><span class="cd-unit">s</span></span>
+      </span>
+      <span class="cd-tail">left</span>
+      <span class="cd-closed">Registration closed</span>
+    </span>
   </div>
 
   <!-- Nav -->
@@ -71,7 +79,13 @@
           </ol>
           <div class="countdown-box">
             <p class="countdown-label">Registration closes in</p>
-            <p class="countdown" id="countdown" aria-live="polite">...</p>
+            <p class="countdown" id="countdown" data-cd>
+              <span class="cd-parts" aria-hidden="true">
+                <span class="cd-days" data-cd-days><span class="cd-num" data-cd-num="d"></span><span class="cd-unit">d</span><span class="cd-sep">:</span></span><span class="cd-seg"><span class="cd-num" data-cd-num="h"></span><span class="cd-unit">h</span></span><span class="cd-sep">:</span><span class="cd-seg"><span class="cd-num" data-cd-num="m"></span><span class="cd-unit">m</span></span><span class="cd-sep">:</span><span class="cd-seg cd-secs"><span class="cd-num" data-cd-num="s"></span><span class="cd-unit">s</span></span>
+              </span>
+              <span class="cd-closed">Registration closed</span>
+              <span class="sr-only" data-cd-a11y></span>
+            </p>
             <p class="countdown-sub" id="deadlineLabelCard">Wednesday 23 Sept · 9:00 PM EAT</p>
           </div>
         </aside>

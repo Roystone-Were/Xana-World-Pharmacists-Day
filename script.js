@@ -25,22 +25,51 @@
   }
 
   // Countdown
-  var countdownEl = document.getElementById("countdown");
-  var countdownMini = document.getElementById("countdownMini");
   var form = document.getElementById("walkForm");
   var submitBtn = document.getElementById("submitBtn");
   var formNote = document.getElementById("formNote");
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
-  function fmt(ms) {
-    if (ms <= 0) return "Closed";
-    var s = Math.floor(ms / 1000);
-    var d = Math.floor(s / 86400);
-    var h = Math.floor((s % 86400) / 3600);
-    var m = Math.floor((s % 3600) / 60);
-    var sec = s % 60;
-    if (d > 0) return d + "d : " + pad(h) + "h : " + pad(m) + "m : " + pad(sec) + "s";
-    return pad(h) + "h : " + pad(m) + "m : " + pad(sec) + "s";
+
+  // Countdown. Both instances (top deadline bar + hero card) share one tick
+  // that walks down to the second. Each tick only rewrites the four numbers,
+  // pulses the seconds group, and switches the urgency tier on <body>, which
+  // is what styles.css animates: calm > warn (24h, amber) > urgent (6h, red).
+  var CD_WARN_MS = 24 * 60 * 60 * 1000;
+  var CD_URGENT_MS = 6 * 60 * 60 * 1000;
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var cdRoots = Array.prototype.map.call(document.querySelectorAll("[data-cd]"), function (root) {
+    return {
+      root: root,
+      days: root.querySelector("[data-cd-days]"),
+      secs: root.querySelector(".cd-secs"),
+      nums: ["d", "h", "m", "s"].map(function (unit) {
+        return root.querySelector('[data-cd-num="' + unit + '"]');
+      }),
+      a11y: root.querySelector("[data-cd-a11y]"),
+      pulse: null,
+    };
+  });
+  var cdTier = "";
+
+  // Only touch the DOM when a value actually changed: this runs every second.
+  function cdText(el, value) {
+    if (el && el.textContent !== value) el.textContent = value;
+  }
+
+  // Web Animations API rather than a CSS animation, so every tick restarts the
+  // pulse in sync with the number it accompanies (a CSS timeline would drift).
+  function cdPulse(r, urgent) {
+    if (!r.secs || !r.secs.animate || reduceMotion.matches || document.hidden) return;
+    if (r.pulse) r.pulse.cancel(); // one live pulse per root, never a pile-up
+    r.pulse = r.secs.animate(
+      [
+        { opacity: 1, transform: "scale(1)" },
+        { opacity: urgent ? 0.35 : 0.5, transform: "scale(1.07)", offset: 0.35 },
+        { opacity: 1, transform: "scale(1)" },
+      ],
+      { duration: urgent ? 900 : 600, easing: "ease-out" }
+    );
   }
 
   function isClosed() {
@@ -49,9 +78,37 @@
 
   function renderCountdown() {
     var left = deadline - Date.now();
-    var label = fmt(left);
-    if (countdownEl) countdownEl.textContent = label;
-    if (countdownMini) countdownMini.textContent = "· " + label + " left";
+    var tier = left <= 0 ? "closed" : left <= CD_URGENT_MS ? "urgent" : left <= CD_WARN_MS ? "warn" : "calm";
+    if (tier !== cdTier) {
+      document.body.dataset.urgency = tier; // styles.css keys urgency off this
+      cdTier = tier;
+    }
+
+    if (left > 0) {
+      var s = Math.floor(left / 1000);
+      var d = Math.floor(s / 86400);
+      var h = Math.floor((s % 86400) / 3600);
+      var m = Math.floor((s % 3600) / 60);
+      var sec = s % 60;
+      cdRoots.forEach(function (r) {
+        r.days.classList.toggle("is-off", d === 0);
+        cdText(r.nums[0], d);
+        cdText(r.nums[1], pad(h));
+        cdText(r.nums[2], pad(m));
+        cdText(r.nums[3], pad(sec));
+        // Screen readers get the coarse value once per hour, not a per-second feed.
+        cdText(
+          r.a11y,
+          d > 0
+            ? d + " day" + (d === 1 ? "" : "s") + " " + h + " hour" + (h === 1 ? "" : "s") + " left"
+            : h > 0
+              ? h + " hour" + (h === 1 ? "" : "s") + " " + m + " minutes left"
+              : m + " minute" + (m === 1 ? "" : "s") + " left"
+        );
+        cdPulse(r, tier === "urgent");
+      });
+    }
+
     if (isClosed() && form && !form.dataset.closedDone) {
       form.dataset.closedDone = "1";
       form.innerHTML =
