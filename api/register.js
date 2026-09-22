@@ -25,6 +25,7 @@ const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/xana-walk-2026/Feq1l
 // One shared counter per T-shirt size: [namespace, key]. Public by design
 // (counters only, no personal data). Sizes always tracked here so the
 // breakdown works with zero setup, whatever the main counter backend is.
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 const SIZE_COUNTERS = {
   "XS": ["xana-walk-2026", "xOEKDK3rrhaguBgT"],
   "S": ["xana-walk-2026", "9ithg68LeMPS_Ubi"],
@@ -32,6 +33,7 @@ const SIZE_COUNTERS = {
   "L": ["xana-walk-2026", "14gDeVhI8YFqYThR"],
   "XL": ["xana-walk-2026", "rJTpjy41vGIR71xv"],
   "XXL": ["xana-walk-2026", "DAz6O1I3rvDd2Ea2"],
+  // Legacy row: option removed from the form, key kept so /count history still renders.
   "Not sure yet": ["xana-walk-2026", "9eTCSBC97kg7vvBe"],
 };
 const AT_URL = "https://api.africastalking.com/version1/messaging";
@@ -308,6 +310,9 @@ module.exports = async function handler(req, res) {
   const walkerPhone = body && typeof body.phone === "string" ? body.phone.trim().slice(0, 30) : "";
   const walkerEmail = body && typeof body.email === "string" ? body.email.trim().slice(0, 120) : "";
   const walkerTshirt = body && typeof body.tshirt === "string" ? body.tshirt.trim().slice(0, 15) : "";
+  if (!SIZES.includes(walkerTshirt)) {
+    return res.status(400).json({ ok: false, error: "bad-tshirt" });
+  }
   const emailOk = isEmail(walkerEmail);
   const organizerEmail = process.env.ORGANIZER_EMAIL || "";
 
