@@ -123,6 +123,57 @@ async function countViaUpstash(url, token, reference, day, detail) {
   return out && out[0] ? Number(out[0].result) : null;
 }
 
+// Duplicate detection. Same reference is always a re-submit. Otherwise the
+// walker matches when the phone matches (last 9 digits, so 0712/712/+254712
+// all collide) or when email AND normalized name both match. Shared family
+// emails with different names are NOT duplicates (Peter vs WinAlison case).
+// Seen references live in xana-walk:refs (Upstash SET); without Upstash the
+// counter backend is aggregates-only, so this check is skipped.
+function normPhoneKey(phone) {
+  const d = String(phone || "").replace(/\D/g, "");
+  return d.length > 9 ? d.slice(-9) : d;
+}
+function normKey(s) {
+  return String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+function isSameWalker(a, b) {
+  const pa = normPhoneKey(a.phone);
+  const pb = normPhoneKey(b.phone);
+  if (pa.length >= 9 && pa === pb) return true;
+  const ea = normKey(a.email);
+  const eb = normKey(b.email);
+  const na = normKey(a.name);
+  const nb = normKey(b.name);
+  return !!(ea && eb && ea === eb && na && nb && na === nb);
+}
+async function findDuplicate(url, token, detail) {
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  const r = await fetch(`${url}/pipeline`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify([
+      ["SISMEMBER", "xana-walk:refs", detail.reference],
+      ["HGETALL", "xana-walk:roster"],
+    ]),
+  });
+  if (!r.ok) throw new Error(`upstash-${r.status}`);
+  const out = await r.json();
+  if (out && out[0] && Number(out[0].result) === 1) {
+    return { reference: detail.reference, reason: "same-reference" };
+  }
+  const flat = out && out[1] && Array.isArray(out[1].result) ? out[1].result : [];
+  for (let i = 0; i < flat.length; i += 2) {
+    try {
+      const row = JSON.parse(flat[i + 1]);
+      if (isSameWalker({ name: detail.name, phone: detail.phone, email: detail.email },
+        { name: row.n, phone: row.p, email: row.e })) {
+        return { reference: flat[i], reason: "same-walker" };
+      }
+    } catch (e) { /* skip corrupt rows */ }
+  }
+  return null;
+}
+
 async function countViaShared() {
   const r = await fetch(SHARED_HIT_URL);
   if (!r.ok) throw new Error(`shared-${r.status}`);
@@ -323,6 +374,12 @@ module.exports = async function handler(req, res) {
     let total;
     let backend;
     if (url && token) {
+      const dup = await findDuplicate(url, token, {
+        reference, name: walkerName, phone: walkerPhone, email: walkerEmail,
+      }).catch(() => null); // never block registration on a lookup failure
+      if (dup) {
+        return res.status(200).json({ ok: true, counted: false, duplicate: true, ref: dup.reference, reason: dup.reason, backend: "upstash", sms: false, mail: { organizer: false, walker: false } });
+      }
       total = await countViaUpstash(url, token, reference, nairobiDay(), {
         name: walkerName,
         phone: walkerPhone,

@@ -199,8 +199,53 @@
     });
   }
 
+  // Double-submit guard. The button disables on submit, but reloads, back-button
+  // resubmits and rapid double-taps mint a fresh reference each time, so the
+  // server would count a second walker. Past cases: Jamila Mwamba x2 (50s apart),
+  // Pauline x2, Geofrey x2, Momanyi re-register. Rule mirrors api/register.js:
+  // same phone, or same email + same name, is the same walker.
+  var submitting = false;
+  function normPhone(p) { var d = String(p || "").replace(/\D/g, ""); return d.length > 9 ? d.slice(-9) : d; }
+  function normEmail(s) { return String(s || "").trim().toLowerCase(); }
+  function normName(s) { return String(s || "").trim().toLowerCase().replace(/\s+/g, " "); }
+  function loadRegs() {
+    try {
+      var a = JSON.parse(localStorage.getItem("xana-walk-registrations") || "[]");
+      return Array.isArray(a) ? a : [];
+    } catch (e) { return []; }
+  }
+  function saveReg(p, e, n, ref) {
+    try {
+      var a = loadRegs();
+      a.push({ p: p, e: e, n: n, ref: ref, at: new Date().toISOString() });
+      localStorage.setItem("xana-walk-registrations", JSON.stringify(a.slice(-20)));
+    } catch (e) { /* private mode */ }
+  }
+  function findReg(a, p, e, n) {
+    for (var i = 0; i < a.length; i++) {
+      var r = a[i];
+      if (p && r.p && r.p === p) return r;
+      if (e && r.e && e === r.e && n && r.n && n === r.n) return r;
+    }
+    return null;
+  }
+  // Already registered on this browser: show the original reference, send nothing.
+  // The form stays enabled so a different person (shared device) can still sign up.
+  function alreadyRegistered(originalRef) {
+    submitting = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Submit registration";
+    document.getElementById("regRef").textContent = originalRef;
+    document.getElementById("successMsg").textContent =
+      "You are already registered under reference " + originalRef + ". No new registration was created. " +
+      "If this is a different person, change the name, phone and email above and submit again.";
+    document.getElementById("formSuccess").hidden = false;
+    if (formNote) formNote.textContent = "Duplicate blocked: this walker is already registered.";
+    document.getElementById("formSuccess").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    if (submitting) return;
     var name = document.getElementById("fullName").value.trim();
     var phone = document.getElementById("phone").value.trim();
     var email = document.getElementById("email").value.trim();
@@ -214,6 +259,10 @@
     var okConsent = show("errConsent", !consent);
     if (!(okName && okPhone && okEmail && okTshirt && okConsent)) return;
 
+    var dup = findReg(loadRegs(), normPhone(phone), normEmail(email), normName(name));
+    if (dup) { alreadyRegistered(dup.ref); return; }
+
+    submitting = true;
     submitBtn.disabled = true;
     submitBtn.textContent = "Submitting…";
 
@@ -231,6 +280,7 @@
         return res.json();
       })
       .then(function (data) {
+        if (data && data.duplicate) { alreadyRegistered(data.ref || ref); return; }
         if (data && data.mail && data.mail.organizer) {
           done(true, ref, data);
         } else {
@@ -281,8 +331,8 @@
         .then(function () { next(); })
         .catch(function () { next(); });
     }
-
     function done(ok, reference, data) {
+      submitting = false;
       submitBtn.disabled = false;
       submitBtn.textContent = "Submit registration";
       if (!ok) return;
@@ -298,6 +348,7 @@
       form.querySelectorAll("input, #tshirtBtn").forEach(function (i) { i.disabled = true; });
       submitBtn.style.display = "none";
       if (formNote) formNote.textContent = "A copy has been emailed to the organizing team.";
+      saveReg(normPhone(phone), normEmail(email), normName(name), reference);
       try {
         var key = "xana-walk-count";
         var n = parseInt(localStorage.getItem(key) || "0", 10) + 1;
