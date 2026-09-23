@@ -68,12 +68,13 @@ async function mailgunSource() {
   }
   const rows = [];
   const seen = new Set();
-  // Mailgun's own begin= filter does not narrow the accepted-events log here, so
-  // the cutoff is applied per page: the log is newest-first, and paging stops as
-  // soon as a page dips below it.
+  // The cutoff is applied per page, not via Mailgun's begin= parameter: begin=
+  // returns the slice *older* than the timestamp (it behaves like an end
+  // boundary), which fed expired notices with no stored body to the merge. The
+  // log is newest-first, so paging simply stops at the first page that dips
+  // below the cutoff.
   const cutoff = SINCE_HOURS > 0 ? Date.now() - SINCE_HOURS * 3600e3 : 0;
-  const begin = cutoff ? `&begin=${Math.floor(cutoff / 1000)}` : "";
-  let url = `https://api.mailgun.net/v3/${DOMAIN}/events?event=accepted&limit=300${begin}`;
+  let url = `https://api.mailgun.net/v3/${DOMAIN}/events?event=accepted&limit=300`;
   for (let page = 0; page < 60 && url; page++) {
     const r = await fetch(url, { headers: { Authorization: AUTH } });
     if (!r.ok) { console.log(`mailgun: events page failed (${r.status})`); break; }
