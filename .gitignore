@@ -2,11 +2,15 @@
 # Personal data never belongs in this repo.
 .private/
 
-# Walker contact/phone exports (VCF imports, WhatsApp lists). This repo is
-# public: committing these would publish 130+ people's phone numbers.
+# Walker contact/phone exports (VCF imports, WhatsApp lists, workbooks). This
+# repo is public: committing these would publish 130+ people's phone numbers.
 *.vcf
+*.xlsx
+*.xls
 whatsapp-*.txt
 whatsapp-*.csv
+tshirt-*.csv
+tshirt-*.txt
 
 # Vercel CLI project link, if it is ever created locally.
 .vercel
