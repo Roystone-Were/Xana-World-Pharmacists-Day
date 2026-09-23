@@ -24,6 +24,7 @@ const arg = (name, fallback) => {
 };
 const OUT_DIR = arg("--out", join(process.cwd(), ".private"));
 const OUTLOOK = arg("--outlook", "");
+const SINCE_HOURS = Number(arg("--since", "0"));
 const DOMAIN = process.env.MG_DOMAIN || "xana.afyanalytics.net";
 const KEY = process.env.MG_API_KEY || "";
 const AUTH = "Basic " + Buffer.from("api:" + KEY).toString("base64");
@@ -67,7 +68,8 @@ async function mailgunSource() {
   }
   const rows = [];
   const seen = new Set();
-  let url = `https://api.mailgun.net/v3/${DOMAIN}/events?event=accepted&limit=300`;
+  const begin = SINCE_HOURS > 0 ? `&begin=${Math.floor((Date.now() - SINCE_HOURS * 3600e3) / 1000)}` : "";
+  let url = `https://api.mailgun.net/v3/${DOMAIN}/events?event=accepted&limit=300${begin}`;
   for (let page = 0; page < 60 && url; page++) {
     const r = await fetch(url, { headers: { Authorization: AUTH } });
     if (!r.ok) { console.log(`mailgun: events page failed (${r.status})`); break; }
@@ -126,11 +128,30 @@ function outlookSource() {
   return rows;
 }
 
+// Carries earlier runs forward: with --since the Mailgun pass only sees recent
+// notices, so the previous snapshot is merged back in rather than dropped.
+function previousSource(dir) {
+  const file = join(dir, "registrations.json");
+  if (!existsSync(file)) return [];
+  try {
+    const rows = JSON.parse(readFileSync(file, "utf8"));
+    console.log(`previous: ${rows.length} rows carried forward from ${file}`);
+    return rows.map((r) => ({ ...r, source: "previous" }));
+  } catch (e) {
+    console.log(`previous: unreadable (${e.message}) - starting fresh`);
+    return [];
+  }
+}
+
 // Merge by reference, keeping the richest record and never overwriting a known
 // value with a blank one.
-const rank = { "mailbox": 3, "mailgun(body)": 3, "mailgun(subject)": 1 };
+const rank = { "mailbox": 3, "mailgun(body)": 3, "previous": 2, "mailgun(subject)": 1 };
 const byRef = new Map();
-for (const r of [...(await mailgunSource()), ...outlookSource()]) {
+for (const r of [
+  ...(await mailgunSource()),
+  ...outlookSource(),
+  ...previousSource(OUT_DIR),
+]) {
   const cur = byRef.get(r.ref);
   if (!cur) { byRef.set(r.ref, r); continue; }
   const winner = (rank[r.source] || 0) > (rank[cur.source] || 0) ? r : cur;

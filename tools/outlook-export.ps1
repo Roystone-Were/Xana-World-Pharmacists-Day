@@ -12,12 +12,25 @@
 # are not cached here; every store in the profile is scanned.
 
 param(
-  [string]$OutFile = "$env:TEMP\xana-outlook.json"
+  [string]$OutFile = "$env:TEMP\xana-outlook.json",
+  # Ask Outlook to sync before scanning: without this the scan only sees the
+  # locally cached mail, which lags whatever arrived since Outlook last synced.
+  [switch]$Sync
 )
 
 $ErrorActionPreference = "Continue"
 $ol = New-Object -ComObject Outlook.Application
 $ns = $ol.GetNamespace("MAPI")
+
+if ($Sync) {
+  $outbox = 0
+  foreach ($store in $ns.Stores) {
+    try { $outbox += $store.GetDefaultFolder(4).Items.Count } catch { }   # 4 = olFolderOutbox
+  }
+  "outbox items before sync: $outbox"
+  try { $ns.SendAndReceive($false) | Out-Null } catch { "sync failed: $_" }
+  Start-Sleep -Seconds 25
+}
 
 $results = New-Object System.Collections.ArrayList
 $folders = 0
