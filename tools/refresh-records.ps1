@@ -22,6 +22,8 @@ $ErrorActionPreference = "Continue"
 $repo = Split-Path -Parent $PSScriptRoot
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 $log = Join-Path $OutDir "refresh.log"
+# A start marker as well: if a run is interrupted, the log still shows it began.
+"$(Get-Date -Format s)  start (pid $PID)" | Add-Content -Path $log
 
 # Mailgun key: -KeyFile first, then MG_API_KEY.
 $key = ""

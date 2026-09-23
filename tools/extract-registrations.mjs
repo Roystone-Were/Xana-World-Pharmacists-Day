@@ -68,13 +68,18 @@ async function mailgunSource() {
   }
   const rows = [];
   const seen = new Set();
-  const begin = SINCE_HOURS > 0 ? `&begin=${Math.floor((Date.now() - SINCE_HOURS * 3600e3) / 1000)}` : "";
+  // Mailgun's own begin= filter does not narrow the accepted-events log here, so
+  // the cutoff is applied per page: the log is newest-first, and paging stops as
+  // soon as a page dips below it.
+  const cutoff = SINCE_HOURS > 0 ? Date.now() - SINCE_HOURS * 3600e3 : 0;
+  const begin = cutoff ? `&begin=${Math.floor(cutoff / 1000)}` : "";
   let url = `https://api.mailgun.net/v3/${DOMAIN}/events?event=accepted&limit=300${begin}`;
   for (let page = 0; page < 60 && url; page++) {
     const r = await fetch(url, { headers: { Authorization: AUTH } });
     if (!r.ok) { console.log(`mailgun: events page failed (${r.status})`); break; }
     const j = await r.json();
-    for (const it of j.items || []) {
+    const items = j.items || [];
+    for (const it of items) {
       const subject = it.message?.headers?.subject || "";
       if (!NOTICE.test(subject)) continue;
       const id = it.message?.headers?.["message-id"] || it.id;
@@ -97,6 +102,8 @@ async function mailgunSource() {
         source: detail ? "mailgun(body)" : "mailgun(subject)",
       });
     }
+    const oldest = items.length ? items[items.length - 1].timestamp * 1000 : 0;
+    if (cutoff && oldest && oldest < cutoff) break;
     url = j.paging?.next || null;
   }
   const withBody = rows.filter((r) => r.source === "mailgun(body)").length;

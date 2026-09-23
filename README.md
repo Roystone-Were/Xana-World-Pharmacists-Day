@@ -205,6 +205,34 @@ extractor defaults to writing there. Re-running it after the walk fills in
 anything Mailgun had already expired, as long as the mail is still in a mailbox
 the profile can read.
 
+### Snapshot on a schedule (what keeps the details alive)
+
+Mailgun keeps a notice's body for 24 h, so a run every 30 minutes makes the
+records permanent without depending on any mailbox:
+
+```powershell
+# once: a task that runs every 30 minutes until Sunday 27 Sept, then expires
+$repo = "C:\Users\user\_Projects\XanaPharmacy\World_Pharmacist_Day"
+$args = "-NoProfile -ExecutionPolicy Bypass -File `"$repo\tools\refresh-records.ps1`" " +
+        "-OutDir `"$env:USERPROFILE\Personal\Xana-Walk`" -KeyFile `"$env:USERPROFILE\Personal\_Garage\Mailgun-Xana.txt`""
+$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 30)
+$trigger.EndBoundary = (Get-Date "2026-09-27T00:00:00").ToString("s")
+Register-ScheduledTask -TaskName "XanaWalk-Records" `
+  -Action (New-ScheduledTaskAction -Execute "powershell.exe" -Argument $args) -Trigger $trigger `
+  -Principal (New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive) `
+  -Settings (New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew) -Force
+
+Get-ScheduledTaskInfo -TaskName "XanaWalk-Records"          # last run + result
+Unregister-ScheduledTask -TaskName "XanaWalk-Records" -Confirm:$false   # stop it
+```
+
+Registered on the organizer's machine as `XanaWalk-Records`, so
+`%USERPROFILE%\Personal\Xana-Walk\registrations.csv` stays current on its own.
+Each run appends one line to `refresh.log` and rewrites the CSV/JSON, merging
+with the previous snapshot so nothing that has aged out of the window is lost.
+`--since 26` keeps each run to a page or two of Mailgun events instead of
+re-reading the whole log.
+
 To make the **site** log records itself, set `UPSTASH_REDIS_REST_URL`,
 `UPSTASH_REDIS_REST_TOKEN` and `COUNT_KEY` in Vercel (section 6), redeploy, and
 open `/count?key=YOUR_KEY`: every registration then lands in `xana-walk:roster`
