@@ -74,8 +74,11 @@ The resulting `https://…vercel.app` link is what you send to participants.
 - Assemble TRM Mall 6:00 AM · step-off 6:30 AM · finish Xana Plus, Ruiru
 - ~20 km · ~4 hrs · 7 checkpoints (TRM Drive, Lumumba Drive, Githurai 44,
   Plant House, The Nord Mall)
-- Registration closes **Wednesday 23 Sept · 9:00 PM EAT** (live countdown;
-  the form auto-closes after the deadline)
+- Registration is **closed** (see section 9): the form is replaced by the closed
+  notice, the CTAs point at the walk-day details, and `POST /api/register`
+  answers `410` to everything. The configured deadline
+  (**Wednesday 23 Sept · 9:00 PM EAT**) remains the page's own cut-off, so the
+  countdown and its staged urgency are intact if the site is ever reopened.
 - Countdown urgency is staged: quiet ticking normally, **amber** with a soft
   glow and blinking colons inside the final 24h, **red** with a faster glow and
   a harder per-second pulse inside the final 6h, then "Registration closed".
@@ -98,14 +101,20 @@ needed** breakdown per size plus a total, tracked the same way from each
 registration's chosen size. Size tracking starts the moment this deploys;
 earlier sign-ups count toward the total only.
 
-Optional upgrade (per-day breakdown): create a free database at
-https://upstash.com (Redis, region near Nairobi), then in Vercel go to
-project → Settings → Environment Variables and add
-`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, then redeploy.
-`/count` will then also list sign-ups per day.
+Optional upgrade (per-day breakdown + key-gated roster): create a free
+database at https://upstash.com (Redis, region near Nairobi), then in Vercel
+go to project → Settings → Environment Variables and add
+`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and `COUNT_KEY` (a
+secret of 12+ characters, e.g. a long random string; anyone holding it can
+read the roster), then redeploy. `/count` will then also list sign-ups per
+day. Open `/count?key=YOUR_KEY` (with your `COUNT_KEY`) to see the full
+attendance roster: name, phone, email address, T-shirt size and reference per
+walker. Without the key the page keeps showing aggregates only.
 
-Note: the inbox stays the source of truth (one email per registration, each
-with a unique reference to cross-check against the counter).
+Note: the roster starts recording the moment this deploys; earlier sign-ups
+appear in the inbox only. The inbox stays the source of truth (one email per
+registration, each with a unique reference to cross-check against the
+counter).
 
 ## 8. Walker SMS via Africa's Talking (one-time setup)
 
@@ -126,3 +135,33 @@ SMS is skipped silently and email + counter keep working.
    every signup.
 5. For Live SMS, top up SMS credits in the Africa's Talking dashboard
    (M-PESA). Each confirmation is one short message.
+
+## 9. Closing and reopening registration
+
+Registration is closed. Both switches must say open for a walker to get in, so
+the site can never end up half-open (an open form that the API rejects, or a
+live API behind a dead form):
+
+| Switch | Controls | Closed (now) | Open |
+| --- | --- | --- | --- |
+| `registrationOpen` in `config.js` | the page: form, countdown, CTAs, copy | `false` | `true` |
+| `REGISTRATION_OPEN` Vercel env var | `POST /api/register` | unset, or any value except `true` | `"true"` |
+
+Closing is fail-safe on both sides: the API answers `410` unless the variable is
+exactly `"true"`, and the page closes whenever `registrationOpen` is `false`.
+
+- **To close:** `registrationOpen: false` in `config.js`, remove
+  `REGISTRATION_OPEN` in Vercel (Settings → Environment Variables), redeploy.
+- **To reopen:** `registrationOpen: true`, add `REGISTRATION_OPEN=true`,
+  redeploy. The deadline (`registrationDeadlineISO`) still auto-closes the page.
+
+While closed, walkers see "Online registration is closed" in the deadline bar, a
+"Registration is closed" countdown and heading, a form-shaped notice carrying the
+customer-care number, and no register CTA anywhere. `/count` keeps working and
+shows the final totals; the organizer inbox stays the source of truth.
+
+Residual case: a page already open in someone's browser at deploy time keeps
+running the old script. Its submit is still rejected by the API (`410`), but the
+old script answers that with a prefilled mail draft to the organizer inbox, so
+treat any arrival after the close as unconfirmed and reply that registration has
+closed.

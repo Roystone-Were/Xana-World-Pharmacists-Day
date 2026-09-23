@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Xana World Pharmacists Day Walk: Register | Sat 26 Sept 2026</title>
-  <meta name="description" content="Join the Xana World Pharmacists Day Walk, TRM Mall to Xana Plus Ruiru, Saturday 26 September 2026. Register before Wednesday 9:00 PM." />
+  <meta name="description" content="Join the Xana World Pharmacists Day Walk, TRM Mall to Xana Plus Ruiru, Saturday 26 September 2026." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -15,10 +15,11 @@
   <a class="skip" href="#register">Skip to registration</a>
 
   <!-- Top deadline bar. The ticking countdown is decorative for AT: the exact
-       deadline is spelled out next to it. -->
+       deadline is spelled out next to it. script.js rewrites the whole line to
+       "Online registration is closed" once registration shuts. -->
   <div class="deadline-bar">
     <span class="dot" aria-hidden="true"></span>
-    <span>Registration closes <strong id="deadlineLabelTop">Wednesday 23 Sept · 9:00 PM EAT</strong></span>
+    <span id="deadlineBarText">Registration closes <strong id="deadlineLabelTop">Wednesday 23 Sept · 9:00 PM EAT</strong></span>
     <span class="countdown-mini" id="countdownMini" data-cd>
       <span class="cd-lead" aria-hidden="true">·</span>
       <span class="cd-parts" aria-hidden="true">
@@ -40,7 +41,7 @@
         <a href="#details">Walk day</a>
         <a href="#documents">Route map</a>
       </nav>
-      <a class="btn btn-primary btn-sm btn-pulse" href="#register">Register free</a>
+      <a class="btn btn-primary btn-sm btn-pulse" id="navCta" href="#register">Register free</a>
     </div>
   </header>
 
@@ -53,7 +54,7 @@
           <h1>Walk with Xana, from TRM Mall to Ruiru.</h1>
           <p class="lede">A community walk in celebration of World Pharmacists Day (Friday 25 Sept), held on Saturday 26 September, connecting every Xana branch to raise awareness for our standalone pharmacies and the XanaPlus Hub. About 20&nbsp;km, around 4 hours on foot.</p>
           <div class="hero-cta">
-            <a class="btn btn-primary" href="#register">Register for the walk</a>
+            <a class="btn btn-primary" id="heroCta" href="#register">Register for the walk</a>
             <a class="btn btn-ghost" href="#route">See the route</a>
           </div>
           <dl class="hero-meta">
@@ -78,7 +79,7 @@
             <li><span class="n n-finish">7</span> Xana Plus, Ruiru <em>finish</em></li>
           </ol>
           <div class="countdown-box">
-            <p class="countdown-label">Registration closes in</p>
+            <p class="countdown-label" id="countdownLabel">Registration closes in</p>
             <p class="countdown" id="countdown" data-cd>
               <span class="cd-parts" aria-hidden="true">
                 <span class="cd-days" data-cd-days><span class="cd-num" data-cd-num="d"></span><span class="cd-unit">d</span><span class="cd-sep">:</span></span><span class="cd-seg"><span class="cd-num" data-cd-num="h"></span><span class="cd-unit">h</span></span><span class="cd-sep">:</span><span class="cd-seg"><span class="cd-num" data-cd-num="m"></span><span class="cd-unit">m</span></span><span class="cd-sep">:</span><span class="cd-seg cd-secs"><span class="cd-num" data-cd-num="s"></span><span class="cd-unit">s</span></span>
@@ -194,7 +195,7 @@
               <li>Free to join · registration required</li>
               <li>~20 km · roughly 4 hours</li>
               <li>Stay with the group marshals</li>
-              <li>Registration closes Wed 9:00 PM</li>
+              <li id="detailCloses">Registration closes Wed 9:00 PM</li>
             </ul>
           </article>
         </div>
@@ -205,11 +206,11 @@
     <section class="section section-register" id="register">
       <div class="wrap register-grid">
         <div class="register-copy">
-          <h2>Register for the walk</h2>
-          <p>Fill in your details below. Your registration is emailed straight to the organizing team so we can keep track of numbers.</p>
+          <h2 id="registerHeading">Register for the walk</h2>
+          <p id="registerLede">Fill in your details below. Your registration is emailed straight to the organizing team so we can keep track of numbers.</p>
           <ul class="register-points">
-            <li>Free entry · friends and family welcome (register each walker)</li>
-            <li>Closes <strong id="deadlineLabelForm">Wednesday 23 Sept · 9:00 PM EAT</strong></li>
+            <li>Free entry · friends and family welcome</li>
+            <li id="registerCloses">Closes <strong id="deadlineLabelForm">Wednesday 23 Sept · 9:00 PM EAT</strong></li>
             <li>Questions on the day? Assemble at TRM Mall from 6:00 AM</li>
           </ul>
           <div class="register-alt">
@@ -294,7 +295,7 @@
         <p class="footer-contact">Enquiries: <a href="tel:+254142631157">+254 142 631 157</a> · <a href="https://wa.me/254142631157?text=Hello%20Xana%20Life%2C%20I%20have%20an%20enquiry%20about%20the%20World%20Pharmacists%20Day%20Walk." target="_blank" rel="noopener">Chat via WhatsApp</a></p>
       </div>
       <div class="footer-right">
-        <a href="#register">Register</a>
+        <a href="#register" id="footerRegister">Register</a>
         <a href="./assets/Xana-Walk-Route.pdf" target="_blank" rel="noopener">Route map</a>
       </div>
     </div>

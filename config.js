@@ -14,8 +14,18 @@ window.XANA_WALK_CONFIG = {
   startPoint: "TRM Mall",
   finishPoint: "Xana Plus, Ruiru",
 
-  // Registration deadline (Africa/Nairobi time).
-  // Wednesday 23 Sept 2026, 9:00 PM EAT (before the Saturday walk).
+  // Registration switch. false = closed, right now: the form is replaced by the
+  // closed notice, the countdown and the CTAs switch to the closed state, and
+  // api/register.js answers 410 to every submission. Reopening needs BOTH this
+  // flag true AND REGISTRATION_OPEN=true in the Vercel env vars.
+  registrationOpen: false,
+
+  // Shown in the form's place while registrationOpen is false.
+  registrationClosedNote:
+    "Online registration is now closed. Please join us at TRM Mall on walk day to ask about late slots, or call customer care on +254 142 631 157.",
+
+  // Registration deadline (Africa/Nairobi time). Still the page's automatic
+  // cut-off if the site is ever reopened: Wednesday 23 Sept 2026, 9:00 PM EAT.
   registrationDeadlineISO: "2026-09-23T21:00:00+03:00",
   registrationDeadlineLabel: "Wednesday 23 Sept · 9:00 PM EAT",
 

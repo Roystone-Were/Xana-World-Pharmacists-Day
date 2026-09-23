@@ -7,6 +7,13 @@
   var DEADLINE_ISO = cfg.registrationDeadlineISO || "2026-09-23T21:00:00+03:00";
   var deadline = new Date(DEADLINE_ISO).getTime();
 
+  // Registration shuts either via the switch in config.js or via the deadline.
+  // api/register.js enforces the same closure server-side (410), so a stale
+  // copy of this page cannot slip a walker through.
+  var CLOSED_BY_CONFIG = cfg.registrationOpen === false;
+  var CLOSED_NOTE = cfg.registrationClosedNote ||
+    "Online registration is now closed. Please join us at TRM Mall on walk day to ask about late slots.";
+
   var EMAIL_PLACEHOLDER = !ORGANIZER_EMAIL || /organizer@xanapharmacy\.com/i.test(ORGANIZER_EMAIL);
 
   // Surface configured labels + mailto link
@@ -73,18 +80,64 @@
   }
 
   function isClosed() {
-    return Date.now() > deadline;
+    return CLOSED_BY_CONFIG || Date.now() > deadline;
+  }
+
+  // Once registration is shut, nothing may point a walker at a form that cannot
+  // submit: status copy, CTAs and the countdown all flip here, in one place.
+  function applyClosedCopy() {
+    setText("deadlineBarText", "Online registration is closed");
+    setText("countdownLabel", "Registration is closed");
+    setText("registerHeading", "Registration is closed");
+    setText("registerLede", "Online sign-ups have closed. Walk-day details are above.");
+    setText("detailCloses", "Registration is closed");
+    setText("registerCloses", "Registration is closed");
+
+    var cardSub = document.getElementById("deadlineLabelCard");
+    if (cardSub) cardSub.hidden = true; // a future deadline next to "closed" reads wrong
+
+    [["navCta", "Walk-day details"], ["heroCta", "Walk-day details"], ["footerRegister", "Walk details"]]
+      .forEach(function (pair) {
+        var a = document.getElementById(pair[0]);
+        if (!a) return;
+        a.textContent = pair[1];
+        a.href = "#details";
+        a.classList.remove("btn-pulse"); // a pulsing CTA is an urgency signal
+      });
+
+    document.title = "Xana World Pharmacists Day Walk | Sat 26 Sept 2026";
+  }
+
+  // Replace the form with the closed notice. Idempotent: the tick calls it, so
+  // does a submit that lands after the deadline.
+  function closeForm() {
+    if (!form || form.dataset.closedDone) return;
+    form.dataset.closedDone = "1";
+    var box = document.createElement("div");
+    box.className = "form-closed";
+    var head = document.createElement("h3");
+    head.textContent = "Registration is closed.";
+    var note = document.createElement("p");
+    note.textContent = CLOSED_NOTE;
+    box.appendChild(head);
+    box.appendChild(note);
+    form.innerHTML = "";
+    form.appendChild(box);
   }
 
   function renderCountdown() {
     var left = deadline - Date.now();
-    var tier = left <= 0 ? "closed" : left <= CD_URGENT_MS ? "urgent" : left <= CD_WARN_MS ? "warn" : "calm";
+    var closed = isClosed();
+    // isClosed(); not the raw deadline: a config-closed site must not show the
+    // amber/red ticking tiers of a deadline that is still hours away.
+    var tier = closed ? "closed" : left <= CD_URGENT_MS ? "urgent" : left <= CD_WARN_MS ? "warn" : "calm";
     if (tier !== cdTier) {
       document.body.dataset.urgency = tier; // styles.css keys urgency off this
       cdTier = tier;
+      if (closed) applyClosedCopy();
     }
 
-    if (left > 0) {
+    if (!closed) {
       var s = Math.floor(left / 1000);
       var d = Math.floor(s / 86400);
       var h = Math.floor((s % 86400) / 3600);
@@ -109,14 +162,7 @@
       });
     }
 
-    if (isClosed() && form && !form.dataset.closedDone) {
-      form.dataset.closedDone = "1";
-      form.innerHTML =
-        '<div class="form-closed"><h3>Registration is closed.</h3>' +
-        "<p>Online registration closed on " +
-        (cfg.registrationDeadlineLabel || "Wednesday at 9:00 PM") +
-        ". Please join us at TRM Mall on walk day to ask about late slots.</p></div>";
-    }
+    if (closed) closeForm();
   }
   renderCountdown();
   setInterval(renderCountdown, 1000);
@@ -245,6 +291,9 @@
   }
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    // The deadline can pass while the page sits open, and the once-a-second tick
+    // may not have run yet: a submit in that gap must not slip through.
+    if (isClosed()) { applyClosedCopy(); closeForm(); return; }
     if (submitting) return;
     var name = document.getElementById("fullName").value.trim();
     var phone = document.getElementById("phone").value.trim();
@@ -276,6 +325,13 @@
       body: JSON.stringify({ reference: ref, name: name, phone: phone, email: email, tshirt: tshirt }),
     })
       .then(function (res) {
+        // 410: the server has registration closed. Never fall through to the
+        // mailto fallback below, which would tell the walker they got in.
+        if (res.status === 410) {
+          var closedErr = new Error("closed");
+          closedErr.closed = true;
+          throw closedErr;
+        }
         if (!res.ok) throw new Error("Register failed");
         return res.json();
       })
@@ -288,7 +344,15 @@
           sendOrganizerMail(function () { done(true, ref, data); });
         }
       })
-      .catch(function () {
+      .catch(function (caught) {
+        // Closed when the request went out or while it was in flight: show the
+        // closed state, never the mailto fallback, which reads as success.
+        if ((caught && caught.closed) || isClosed()) {
+          submitting = false;
+          applyClosedCopy();
+          closeForm();
+          return;
+        }
         // Last resort: open the organizer inbox with prefilled details.
         try {
           var body = "New walk registration%0D%0A%0D%0AName: " + encodeURIComponent(name) +

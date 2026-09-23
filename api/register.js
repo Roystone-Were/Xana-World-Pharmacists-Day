@@ -19,6 +19,14 @@
 // Without AT_* vars SMS is skipped silently; email + counter keep working.
 // Counter backend: built-in shared counter, or Upstash when
 // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are present.
+//
+// Registration switch: the walk's registration is closed, so every POST is
+// answered 410 before it can tick a counter, write a roster row or send
+// mail/SMS. Only the exact value REGISTRATION_OPEN="true" reopens it, so an
+// unset variable (fresh environment, typo, deleted var) keeps the API closed
+// instead of silently accepting walkers again.
+
+const REGISTRATION_OPEN = process.env.REGISTRATION_OPEN === "true";
 
 const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/xana-walk-2026/Feq1lPfkt_GNnCfy";
 
@@ -343,6 +351,11 @@ module.exports = async function handler(req, res) {
 
   if (req.method !== "POST") {
     return res.status(405).json({ ok: false, error: "POST only" });
+  }
+
+  // Closed: reject before any validation, counter, roster or send.
+  if (!REGISTRATION_OPEN) {
+    return res.status(410).json({ ok: false, error: "closed" });
   }
 
   let body = req.body;

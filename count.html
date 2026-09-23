@@ -45,12 +45,19 @@
           <ul class="count-day-list" id="countSizesList"></ul>
         </div>
 
+        <div class="count-days" id="countRosterWrap" hidden>
+          <h2>Attendance roster</h2>
+          <ul class="count-day-list" id="countRosterList"></ul>
+        </div>
+
+        <p class="fineprint" id="countKeyHint" hidden>Organizers: open this page with <code>?key=YOUR_KEY</code> to view the attendance roster.</p>
+
         <div class="form-success" id="countSetup" hidden>
           <h3>Counter not connected yet.</h3>
           <p id="countSetupText">Add the Upstash env vars in Vercel (see README section 6), then redeploy. Email registrations are unaffected.</p>
         </div>
 
-        <p class="fineprint">Source of truth stays the organizer inbox (one email per registration, each with a unique reference). This counter is indicative: it ticks when the confirmation screen shows.</p>
+        <p class="fineprint">Source of truth stays the organizer inbox (one email per registration, each with a unique reference). This counter is indicative: it ticks when the confirmation screen shows. Names, phones, emails and sizes appear only on the key-gated roster, never on the public totals.</p>
       </div>
     </section>
   </main>
@@ -63,7 +70,7 @@
         <p class="footer-contact">Enquiries: <a href="tel:+254142631157">+254 142 631 157</a> · <a href="https://wa.me/254142631157?text=Hello%20Xana%20Life%2C%20I%20have%20an%20enquiry%20about%20the%20World%20Pharmacists%20Day%20Walk." target="_blank" rel="noopener">Chat via WhatsApp</a></p>
       </div>
       <div class="footer-right">
-        <a href="./">Register</a>
+        <a href="./">Registration page</a>
       </div>
     </div>
   </footer>
@@ -78,7 +85,9 @@
 
       async function load() {
         try {
-          var r = await fetch("./api/count", { cache: "no-store" });
+          var key = "";
+          try { key = new URLSearchParams(window.location.search).get("key") || ""; } catch (e) {}
+          var r = await fetch("./api/count" + (key ? "?key=" + encodeURIComponent(key) : ""), { cache: "no-store" });
           var d = await r.json();
           if (!d.configured || d.total === null) {
             totalEl.textContent = "...";
@@ -132,6 +141,31 @@
             totalLi.appendChild(totalS);
             totalLi.appendChild(totalB);
             sizesList.appendChild(totalLi);
+          }
+          var rosterWrap = document.getElementById("countRosterWrap");
+          var rosterList = document.getElementById("countRosterList");
+          var keyHint = document.getElementById("countKeyHint");
+          var roster = Array.isArray(d.roster) ? d.roster : [];
+          if (roster.length) {
+            rosterWrap.hidden = false;
+            keyHint.hidden = true;
+            rosterList.innerHTML = "";
+            roster.forEach(function (w) {
+              var li = document.createElement("li");
+              var b = document.createElement("strong");
+              b.textContent = w.name || "(name missing)";
+              var s = document.createElement("span");
+              s.textContent = [w.ref, w.phone, w.email, w.size ? "Size " + w.size : ""]
+                .filter(function (x) { return x; }).join(" · ");
+              li.appendChild(b);
+              li.appendChild(s);
+              rosterList.appendChild(li);
+            });
+          } else {
+            rosterWrap.hidden = true;
+            // Upsell the roster only when the key-gated backend is live;
+            // on the zero-setup backend there is no per-person store.
+            keyHint.hidden = !(d.backend === "upstash" && !roster.length);
           }
         } catch (e) {
           totalEl.textContent = "...";
