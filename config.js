@@ -14,20 +14,23 @@ window.XANA_WALK_CONFIG = {
   startPoint: "TRM Mall",
   finishPoint: "Xana Plus, Ruiru",
 
-  // Registration switch. true = open, as now: the form, countdown and CTAs are
-  // live and api/register.js accepts walkers. false closes the page immediately
-  // (api/register.js additionally honours REGISTRATION_OPEN=false). Either way
-  // both sides stop at registrationDeadlineISO below.
-  registrationOpen: true,
+  // Registration switch. false = closed, as now: the form is replaced by the
+  // closed notice, the countdown and CTAs switch to the closed state, and
+  // api/register.js refuses submissions. The window shut on Wednesday 23 Sept
+  // 2026 at noon EAT, i.e. registrationDeadlineISO below, which closes the API
+  // too; this flag is the page-side override.
+  registrationOpen: false,
 
   // Shown in the form's place while registrationOpen is false.
   registrationClosedNote:
     "Online registration is now closed. Please join us at TRM Mall on walk day to ask about late slots, or call customer care on +254 142 631 157.",
 
-  // Registration deadline (Africa/Nairobi time). Still the page's automatic
-  // cut-off if the site is ever reopened: Wednesday 23 Sept 2026, 9:00 PM EAT.
-  registrationDeadlineISO: "2026-09-23T21:00:00+03:00",
-  registrationDeadlineLabel: "Wednesday 23 Sept · 9:00 PM EAT",
+  // Registration deadline (Africa/Nairobi time). Registration closed at this
+  // instant: Wednesday 23 Sept 2026, 12:00 PM EAT. api/register.js mirrors it
+  // (DEADLINE_MS, override with REGISTRATION_DEADLINE), so page and API shut
+  // together. Moving both reopens the window.
+  registrationDeadlineISO: "2026-09-23T12:00:00+03:00",
+  registrationDeadlineLabel: "Wednesday 23 Sept · 12:00 PM EAT",
 
   formSubject: "New registration: Xana World Pharmacists Day Walk",
 };

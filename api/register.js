@@ -20,17 +20,17 @@
 // Counter backend: built-in shared counter, or Upstash when
 // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are present.
 //
-// Registration switch, reopened 23 Sept 2026. The API accepts walkers unless
-// REGISTRATION_OPEN is exactly "false" (the kill switch), and it stops on its
-// own at the deadline below, so a reopened site cannot outlive the cut-off even
-// if nobody closes it by hand. Both gates run before any counter tick, roster
-// row, mail or SMS.
+// Registration is closed: the window shut on Wednesday 23 Sept 2026 at noon
+// EAT - the deadline below, which is how both the API and the page close. The
+// switch remains a manual override (REGISTRATION_OPEN="false" closes it
+// regardless; REGISTRATION_DEADLINE moves the cut-off). Both gates run before
+// any counter tick, roster row or mail send.
 const REGISTRATION_CLOSED = process.env.REGISTRATION_OPEN === "false";
 
-// Mirrors config.js registrationDeadlineISO (Wednesday 23 Sept 2026, 9:00 PM
-// EAT) so page and API close at the same instant. Set REGISTRATION_DEADLINE to
-// another ISO 8601 instant to extend the window without editing this file.
-const DEADLINE_MS = Date.parse(process.env.REGISTRATION_DEADLINE || "2026-09-23T21:00:00+03:00");
+// Mirrors config.js registrationDeadlineISO so page and API close at the same
+// instant. Set REGISTRATION_DEADLINE to another ISO 8601 instant to move it
+// without editing this file.
+const DEADLINE_MS = Date.parse(process.env.REGISTRATION_DEADLINE || "2026-09-23T12:00:00+03:00");
 
 function isRegistrationOpen() {
   if (REGISTRATION_CLOSED) return false;

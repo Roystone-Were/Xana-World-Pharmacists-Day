@@ -74,9 +74,9 @@ The resulting `https://…vercel.app` link is what you send to participants.
 - Assemble TRM Mall 6:00 AM · step-off 6:30 AM · finish Xana Plus, Ruiru
 - ~20 km · ~4 hrs · 7 checkpoints (TRM Drive, Lumumba Drive, Githurai 44,
   Plant House, The Nord Mall)
-- Registration is **open again** (see section 9), closing at the configured
-  deadline **Wednesday 23 Sept · 9:00 PM EAT**: the page hides the form at that
-  instant and `POST /api/register` starts answering `410` at the same moment.
+- Registration is **closed** (see section 9): it shut on **Wednesday 23 Sept at
+  12:00 PM EAT**. The form is replaced by the closed notice, the CTAs point at
+  the walk-day details, and `POST /api/register` answers `410` to everything.
 - Countdown urgency is staged: quiet ticking normally, **amber** with a soft
   glow and blinking colons inside the final 24h, **red** with a faster glow and
   a harder per-second pulse inside the final 6h, then "Registration closed".
@@ -136,23 +136,25 @@ SMS is skipped silently and email + counter keep working.
 
 ## 9. Opening, closing and the deadline
 
-Registration was closed on the morning of 23 Sept and **reopened the same day**.
-Two switches control it, plus the deadline:
+**Registration is closed** — it shut on Wednesday 23 Sept 2026 at 12:00 PM EAT,
+after being closed that morning and reopened for a few hours. Two switches
+control it, plus the deadline:
 
 | Switch | Controls | Now | Effect |
 | --- | --- | --- | --- |
-| `registrationOpen` in `config.js` | the page: form, countdown, CTAs, copy | `true` | `false` replaces the form with the closed notice |
-| `REGISTRATION_OPEN` Vercel env var | `POST /api/register` | unset = open | exactly `"false"` makes the API answer `410` |
-| `registrationDeadlineISO` in `config.js` + `REGISTRATION_DEADLINE` in Vercel | both | `2026-09-23T21:00:00+03:00` | page and API both close at that instant |
+| `registrationOpen` in `config.js` | the page: form, countdown, CTAs, copy | `false` | `false` replaces the form with the closed notice |
+| `REGISTRATION_OPEN` Vercel env var | `POST /api/register` | unset | exactly `"false"` closes the API immediately |
+| `registrationDeadlineISO` in `config.js` + `REGISTRATION_DEADLINE` in Vercel | both | `2026-09-23T12:00:00+03:00` | page and API both close at that instant |
 
 - **To close now:** set `registrationOpen: false` in `config.js`, redeploy.
   Optionally add `REGISTRATION_OPEN=false` in Vercel to close the API too.
-- **To reopen:** `registrationOpen: true`, and remove/blank `REGISTRATION_OPEN`.
+- **To reopen:** `registrationOpen: true`, remove/blank `REGISTRATION_OPEN`, and
+  move **both** deadlines (`registrationDeadlineISO` and `REGISTRATION_DEADLINE`)
+  past the new closing time, then redeploy — they are separate copies of the
+  same instant.
 - **Deadline:** the API refuses `410` with `{"error":"closed"}` once the deadline
-  passes, so a reopened site cannot keep taking walkers past the cut-off. The
-  page shows its closed state at the same moment. To extend, change
-  `registrationDeadlineISO` **and** set `REGISTRATION_DEADLINE` (ISO 8601) in
-  Vercel, then redeploy — they are separate copies of the same instant.
+  passes, so an open site cannot keep taking walkers past the cut-off. The page
+  shows its closed state at the same moment.
 
 While closed, walkers see "Online registration is closed" in the deadline bar, a
 "Registration is closed" countdown and heading, a form-shaped notice carrying the
