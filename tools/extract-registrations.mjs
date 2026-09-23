@@ -25,9 +25,6 @@ const arg = (name, fallback) => {
 const OUT_DIR = arg("--out", join(process.cwd(), ".private"));
 const OUTLOOK = arg("--outlook", "");
 const SINCE_HOURS = Number(arg("--since", "0"));
-const AT_LOG = arg("--at-log", "");
-const AT_USER = process.env.AT_USERNAME || "";
-const AT_KEY = process.env.AT_API_KEY || "";
 const DOMAIN = process.env.MG_DOMAIN || "xana.afyanalytics.net";
 const KEY = process.env.MG_API_KEY || "";
 const AUTH = "Basic " + Buffer.from("api:" + KEY).toString("base64");
@@ -139,57 +136,6 @@ function outlookSource() {
   return rows;
 }
 
-// Walkers got a confirmation SMS carrying their reference, so Africa's Talking's
-// message log maps reference -> phone number for every registration it reached.
-// That is the reliable way to fill phones whose Mailgun body has expired
-// (day-old notices) when the organizer mailbox is hard to reach.
-//   --at-log FILE   a dump of the dashboard's message log (JSON), or
-//   AT_USERNAME/AT_API_KEY   to fetch the log from the API directly.
-async function smsSource() {
-  let messages = [];
-  if (AT_LOG) {
-    const raw = JSON.parse(readFileSync(AT_LOG, "utf8").replace(/^\uFEFF/, ""));
-    messages = raw.SMSMessageData?.Messages || raw.messages || (Array.isArray(raw) ? raw : []);
-    console.log(`sms log file: ${messages.length} messages from ${AT_LOG}`);
-  } else if (AT_USER && AT_KEY) {
-    const r = await fetch(`https://api.africastalking.com/version1/messaging?username=${encodeURIComponent(AT_USER)}`, {
-      headers: { apiKey: AT_KEY, Accept: "application/json" },
-    });
-    if (!r.ok) {
-      console.log(`sms: fetch failed (${r.status})`);
-      return [];
-    }
-    const j = await r.json();
-    messages = j.SMSMessageData?.Messages || [];
-    console.log(`sms: ${messages.length} messages from Africa's Talking`);
-  } else {
-    console.log("sms: skipped (no --at-log and no AT_USERNAME/AT_API_KEY)");
-    return [];
-  }
-
-  const rows = [];
-  for (const m of messages) {
-    const text = String(m.text || m.message || "");
-    const phone = normalisePhone(m.phoneNumber || m.number || m.to || "");
-    const ref = (/XANA-\d{4}-[A-Z0-9]{5}/.exec(text) || [])[0] || "";
-    if (!ref || !phone) continue;
-    const name = (/^Karibu ([^!]+)!/.exec(text) || [])[1] || "";
-    rows.push({ ref, name, phone, email: "", size: "", submittedAt: "", at: m.date || "", source: "sms" });
-  }
-  console.log(`sms: ${rows.length} messages carried a walk reference`);
-  return rows;
-}
-
-// "0712345678" and "+254712345678" both arrive; keep what the walker typed where
-// possible, otherwise present the international form.
-function normalisePhone(p) {
-  const s = String(p || "").trim();
-  if (/^\+?\d{9,15}$/.test(s) === false) return "";
-  if (s.startsWith("+254")) return "0" + s.slice(4);
-  if (s.startsWith("254")) return "0" + s.slice(3);
-  return s;
-}
-
 // Carries earlier runs forward: with --since the Mailgun pass only sees recent
 // notices, so the previous snapshot is merged back in rather than dropped.
 function previousSource(dir) {
@@ -207,10 +153,9 @@ function previousSource(dir) {
 
 // Merge by reference, keeping the richest record and never overwriting a known
 // value with a blank one.
-const rank = { "sms": 4, "mailbox": 3, "mailgun(body)": 3, "previous": 2, "mailgun(subject)": 1 };
+const rank = { "mailbox": 3, "mailgun(body)": 3, "previous": 2, "mailgun(subject)": 1 };
 const byRef = new Map();
 for (const r of [
-  ...(await smsSource()),
   ...(await mailgunSource()),
   ...outlookSource(),
   ...previousSource(OUT_DIR),
