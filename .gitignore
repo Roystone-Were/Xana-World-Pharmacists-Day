@@ -1,0 +1,6 @@
+# Local extractor output: registration records (names, phones, emails).
+# Personal data never belongs in this repo.
+.private/
+
+# Vercel CLI project link, if it is ever created locally.
+.vercel

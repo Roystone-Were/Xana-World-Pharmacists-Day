@@ -37,6 +37,14 @@ function isRegistrationOpen() {
   return !(Number.isFinite(DEADLINE_MS) && Date.now() > DEADLINE_MS);
 }
 
+// Every registration notice is copied to a second mailbox as well, so the
+// walker record (name, phone, email, T-shirt, reference) survives independently
+// of the primary inbox and the 24h Mailgun body retention, and can be extracted
+// at any time with tools/extract-registrations.mjs. The /count roster needs
+// Upstash env vars; the mailboxes never expire. Set MG_CC="off" to stop the
+// duplicate, or MG_CC to another address to send it elsewhere.
+const ORGANIZER_CC = process.env.MG_CC === "off" ? "" : process.env.MG_CC || "roystone@xanalife.com";
+
 const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/xana-walk-2026/Feq1lPfkt_GNnCfy";
 
 // One shared counter per T-shirt size: [namespace, key]. Public by design
@@ -435,8 +443,10 @@ module.exports = async function handler(req, res) {
         tshirt: walkerTshirt,
         submittedAt: new Date().toISOString(),
       };
+      // Primary inbox + the permanent second copy (ORGANIZER_CC above).
+      const organizerRecipients = [organizerEmail, ORGANIZER_CC].filter(Boolean).join(", ");
       mail.organizer = await sendMailgun({
-        to: organizerEmail,
+        to: organizerRecipients,
         subject: "New walker registered: " + (walkerName || "Walker") + " (" + reference + ")",
         text: organizerMailText(detail),
         html: organizerMailHtml(detail),

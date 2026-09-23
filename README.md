@@ -162,3 +162,51 @@ organizer inbox stays the source of truth.
 Residual case: a page already open in someone's browser at deploy time keeps
 running the old script. Its submit is still checked by the API — a `410` is
 never treated as success by the current script.
+
+## 10. Keeping the walker records (extract later)
+
+Each registration carries name, phone, email, T-shirt size and a unique
+reference. Where that record survives:
+
+| Store | Holds | Lifetime |
+| --- | --- | --- |
+| Organizer inbox (`ORGANIZER_EMAIL`) | full notice per registration | permanent |
+| Second organizer inbox (`MG_CC`, default `roystone@xanalife.com`) | the same notice | permanent |
+| Mailgun events log (`api.mailgun.net/v3/xana.afyanalytics.net/events`) | name + reference in the subject | ~5 days |
+| Mailgun message bodies | phone, email, size, reference | **24 h** |
+| `/count` roster (`xana-walk:roster`) | full per-walker row | only when Upstash is configured |
+
+The site itself keeps **aggregates only** unless Upstash is configured (section
+6) — that is what the roster store is for. So the mailboxes are the durable,
+machine-readable records, and `api/register.js` sends every notice to two of
+them (`MG_CC` defaults to the second; `MG_CC="off"` disables the copy).
+
+### Extract everything into one table
+
+```powershell
+# 1. Mailbox dump (Windows + Outlook, read-only, scans every store in the profile)
+.\tools\outlook-export.ps1 -OutFile "$env:TEMP\xana-outlook.json"
+
+# 2. Merge Mailgun's log (24h of details, 5 days of names) with the mailbox dump
+$env:MG_DOMAIN = "xana.afyanalytics.net"
+$env:MG_API_KEY = "<Mailgun private API key>"
+node tools\extract-registrations.mjs --out "$env:USERPROFILE\Personal\Xana-Walk" `
+     --outlook "$env:TEMP\xana-outlook.json"
+```
+
+Output: `registrations.csv` (spreadsheet-ready, BOM'd for Excel) and
+`registrations.json`, merged by reference, newest source winning and blanks
+never overwriting known values. Run it at any time; it is read-only and
+idempotent. Without `--outlook` it uses Mailgun alone; without `MG_API_KEY` it
+uses the mailbox alone.
+
+Personal data must stay out of this repo: `.private/` is gitignored, and the
+extractor defaults to writing there. Re-running it after the walk fills in
+anything Mailgun had already expired, as long as the mail is still in a mailbox
+the profile can read.
+
+To make the **site** log records itself, set `UPSTASH_REDIS_REST_URL`,
+`UPSTASH_REDIS_REST_TOKEN` and `COUNT_KEY` in Vercel (section 6), redeploy, and
+open `/count?key=YOUR_KEY`: every registration then lands in `xana-walk:roster`
+and the roster lists name, phone, email, size and reference. That path is
+already implemented in `api/register.js` and `api/count.js`.
