@@ -20,13 +20,22 @@
 // Counter backend: built-in shared counter, or Upstash when
 // UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are present.
 //
-// Registration switch: the walk's registration is closed, so every POST is
-// answered 410 before it can tick a counter, write a roster row or send
-// mail/SMS. Only the exact value REGISTRATION_OPEN="true" reopens it, so an
-// unset variable (fresh environment, typo, deleted var) keeps the API closed
-// instead of silently accepting walkers again.
+// Registration switch, reopened 23 Sept 2026. The API accepts walkers unless
+// REGISTRATION_OPEN is exactly "false" (the kill switch), and it stops on its
+// own at the deadline below, so a reopened site cannot outlive the cut-off even
+// if nobody closes it by hand. Both gates run before any counter tick, roster
+// row, mail or SMS.
+const REGISTRATION_CLOSED = process.env.REGISTRATION_OPEN === "false";
 
-const REGISTRATION_OPEN = process.env.REGISTRATION_OPEN === "true";
+// Mirrors config.js registrationDeadlineISO (Wednesday 23 Sept 2026, 9:00 PM
+// EAT) so page and API close at the same instant. Set REGISTRATION_DEADLINE to
+// another ISO 8601 instant to extend the window without editing this file.
+const DEADLINE_MS = Date.parse(process.env.REGISTRATION_DEADLINE || "2026-09-23T21:00:00+03:00");
+
+function isRegistrationOpen() {
+  if (REGISTRATION_CLOSED) return false;
+  return !(Number.isFinite(DEADLINE_MS) && Date.now() > DEADLINE_MS);
+}
 
 const SHARED_HIT_URL = "https://abacus.jasoncameron.dev/hit/xana-walk-2026/Feq1lPfkt_GNnCfy";
 
@@ -353,8 +362,9 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ ok: false, error: "POST only" });
   }
 
-  // Closed: reject before any validation, counter, roster or send.
-  if (!REGISTRATION_OPEN) {
+  // Closed by the kill switch or by the deadline: reject before any validation,
+  // counter tick, roster write or send.
+  if (!isRegistrationOpen()) {
     return res.status(410).json({ ok: false, error: "closed" });
   }
 

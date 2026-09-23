@@ -14,11 +14,11 @@ window.XANA_WALK_CONFIG = {
   startPoint: "TRM Mall",
   finishPoint: "Xana Plus, Ruiru",
 
-  // Registration switch. false = closed, right now: the form is replaced by the
-  // closed notice, the countdown and the CTAs switch to the closed state, and
-  // api/register.js answers 410 to every submission. Reopening needs BOTH this
-  // flag true AND REGISTRATION_OPEN=true in the Vercel env vars.
-  registrationOpen: false,
+  // Registration switch. true = open, as now: the form, countdown and CTAs are
+  // live and api/register.js accepts walkers. false closes the page immediately
+  // (api/register.js additionally honours REGISTRATION_OPEN=false). Either way
+  // both sides stop at registrationDeadlineISO below.
+  registrationOpen: true,
 
   // Shown in the form's place while registrationOpen is false.
   registrationClosedNote:

@@ -74,11 +74,9 @@ The resulting `https://…vercel.app` link is what you send to participants.
 - Assemble TRM Mall 6:00 AM · step-off 6:30 AM · finish Xana Plus, Ruiru
 - ~20 km · ~4 hrs · 7 checkpoints (TRM Drive, Lumumba Drive, Githurai 44,
   Plant House, The Nord Mall)
-- Registration is **closed** (see section 9): the form is replaced by the closed
-  notice, the CTAs point at the walk-day details, and `POST /api/register`
-  answers `410` to everything. The configured deadline
-  (**Wednesday 23 Sept · 9:00 PM EAT**) remains the page's own cut-off, so the
-  countdown and its staged urgency are intact if the site is ever reopened.
+- Registration is **open again** (see section 9), closing at the configured
+  deadline **Wednesday 23 Sept · 9:00 PM EAT**: the page hides the form at that
+  instant and `POST /api/register` starts answering `410` at the same moment.
 - Countdown urgency is staged: quiet ticking normally, **amber** with a soft
   glow and blinking colons inside the final 24h, **red** with a faster glow and
   a harder per-second pulse inside the final 6h, then "Registration closed".
@@ -136,32 +134,31 @@ SMS is skipped silently and email + counter keep working.
 5. For Live SMS, top up SMS credits in the Africa's Talking dashboard
    (M-PESA). Each confirmation is one short message.
 
-## 9. Closing and reopening registration
+## 9. Opening, closing and the deadline
 
-Registration is closed. Both switches must say open for a walker to get in, so
-the site can never end up half-open (an open form that the API rejects, or a
-live API behind a dead form):
+Registration was closed on the morning of 23 Sept and **reopened the same day**.
+Two switches control it, plus the deadline:
 
-| Switch | Controls | Closed (now) | Open |
+| Switch | Controls | Now | Effect |
 | --- | --- | --- | --- |
-| `registrationOpen` in `config.js` | the page: form, countdown, CTAs, copy | `false` | `true` |
-| `REGISTRATION_OPEN` Vercel env var | `POST /api/register` | unset, or any value except `true` | `"true"` |
+| `registrationOpen` in `config.js` | the page: form, countdown, CTAs, copy | `true` | `false` replaces the form with the closed notice |
+| `REGISTRATION_OPEN` Vercel env var | `POST /api/register` | unset = open | exactly `"false"` makes the API answer `410` |
+| `registrationDeadlineISO` in `config.js` + `REGISTRATION_DEADLINE` in Vercel | both | `2026-09-23T21:00:00+03:00` | page and API both close at that instant |
 
-Closing is fail-safe on both sides: the API answers `410` unless the variable is
-exactly `"true"`, and the page closes whenever `registrationOpen` is `false`.
-
-- **To close:** `registrationOpen: false` in `config.js`, remove
-  `REGISTRATION_OPEN` in Vercel (Settings → Environment Variables), redeploy.
-- **To reopen:** `registrationOpen: true`, add `REGISTRATION_OPEN=true`,
-  redeploy. The deadline (`registrationDeadlineISO`) still auto-closes the page.
+- **To close now:** set `registrationOpen: false` in `config.js`, redeploy.
+  Optionally add `REGISTRATION_OPEN=false` in Vercel to close the API too.
+- **To reopen:** `registrationOpen: true`, and remove/blank `REGISTRATION_OPEN`.
+- **Deadline:** the API refuses `410` with `{"error":"closed"}` once the deadline
+  passes, so a reopened site cannot keep taking walkers past the cut-off. The
+  page shows its closed state at the same moment. To extend, change
+  `registrationDeadlineISO` **and** set `REGISTRATION_DEADLINE` (ISO 8601) in
+  Vercel, then redeploy — they are separate copies of the same instant.
 
 While closed, walkers see "Online registration is closed" in the deadline bar, a
 "Registration is closed" countdown and heading, a form-shaped notice carrying the
-customer-care number, and no register CTA anywhere. `/count` keeps working and
-shows the final totals; the organizer inbox stays the source of truth.
+customer-care number, and no register CTA anywhere. `/count` keeps working; the
+organizer inbox stays the source of truth.
 
 Residual case: a page already open in someone's browser at deploy time keeps
-running the old script. Its submit is still rejected by the API (`410`), but the
-old script answers that with a prefilled mail draft to the organizer inbox, so
-treat any arrival after the close as unconfirmed and reply that registration has
-closed.
+running the old script. Its submit is still checked by the API — a `410` is
+never treated as success by the current script.
